@@ -208,8 +208,9 @@ def save_random_metadata():
 
 
 def logout():
-    """Logs out our user session. In practice this isn't normally needed as there is no
-    connection limit or timeout for REST API connections"""
+    """Logs out our user session.
+    In practice this isn't normally needed as there is no connection limit or timeout for REST API connections.
+    """
     logout_url = f"{SERVER_URL}/api/v1/auth/logout?session={API_TOKEN}"
     logout_data = '{}'
 
