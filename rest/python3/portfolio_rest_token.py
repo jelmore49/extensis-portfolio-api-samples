@@ -1,46 +1,40 @@
+# Imports
 import urllib3
 import json
 import random
 import os
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - version 17sep2021 -
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Constants
 
-SERVER_PROTOCOL = "http"  # - - - - "http" or "https"
+SERVER_PROTOCOL = "http"  # "http" or "https"
 SERVER_ADDRESS = "playground.extensis.com"
-SERVER_PORT = "8090"  # - - - - - - "8090" for http / "9443" for https
-SERVER_URL = f"{SERVER_PROTOCOL}://{SERVER_ADDRESS}:{SERVER_PORT}"
-API_TOKEN = "TOKEN-e554ed0f-5438-4576-bfc4-fe562d972920"
+SERVER_PORT = "8090"  # Portfolio uses "8090" for HTTP and "9443" for HTTPS by default
+SERVER_URL = f"{SERVER_PROTOCOL}://{SERVER_ADDRESS}:{SERVER_PORT}" # Our server URL
+API_TOKEN = "TOKEN-e554ed0f-5438-4576-bfc4-fe562d972920" # API token; see Portfolio docs on how to generate
 TARGET_CATALOG = "DEMO - Stock Photography"
-IMAGES_PATH = "Assets"
-METADATA_PATH = "Metadata"
+IMAGES_PATH = "Assets" # Folder to save downloaded assets on disk
+METADATA_PATH = "Metadata" # Folder to save downloaded metadata
 
 # These are filled out as the script runs
+
 catalog_id = ""
-total_assets = 0
 random_id = ""
 random_filename = ""
 random_metadata = ""
+total_assets = 0
 
-# urllib3 requires a PoolManager instance to make requests
+# Start our PoolManager
+
 http = urllib3.PoolManager()
 
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-
-# --- [ START ] : Get Catalogs - - - - - - - - - - - - - - - - - - - -
-#                 Retrieves an array of the available Catalogs - - - -
-
 def get_catalogs():
+    """Returns and prints an array of available catalogs"""
     catalog_url = f"{SERVER_URL}/api/v1/catalog?session={API_TOKEN}"
 
     try:
         catalogs_request = http.request("GET", catalog_url)
-        # print(f"catalogs_request is {catalogs_request}")
         catalogs_body = catalogs_request.data.decode('UTF-8')
-        # print(f"catalogs_body is {catalogs_body}")
         catalogs = json.loads(catalogs_body)
 
     except urllib3.exceptions.RequestError as error:
@@ -65,25 +59,17 @@ def get_catalogs():
                     catalog_id = catalog_name['id']
 
 
-# --- [  END  ] : Get Catalogs - - - - - - - - - - - - - - - - - - - -
-
-
-# --- [ START ] : Find Number Assets - - - - - - - - - - - - - - - - - - - -
-#                 Retrieves the current total number of available assets - -
-
 def find_number_assets():
+    """Returns and prints the current total number of assets"""
     find_number_url = f"{SERVER_URL}/api/v1/catalog/{catalog_id}/asset/?session={API_TOKEN}"
     find_number_data = '{"fields":["Item ID","Filename"],"pageSize":1,"startingIndex":0,"sortOptions":{' \
                        '"field":"Cataloged","order":"desc"},}'
-    # print(f"find_number_data is {find_number_data}")
 
     try:
         find_number_request = http.request("POST", find_number_url, body=find_number_data,
                                            headers={'Accept': 'application/json, text/plain, */*',
                                                     'Content-Type': 'application/json;charset=UTF-8'})
-        # print(f"find_number_request is {find_number_request}")
         find_number_body = find_number_request.data.decode('UTF-8')
-        # print(f"find_number_body is {find_number_body}")
         assets = json.loads(find_number_body)
 
     except urllib3.exceptions.RequestError as error:
@@ -100,20 +86,13 @@ def find_number_assets():
             total_assets = int(assets['totalNumberOfAssets'])
 
 
-# --- [  END  ] : Find Number Assets - - - - - - - - - - - - - - - - - - - -
-
-
-# --- [ START ] : Find Random ID - - - - - - - - - - - - - - - - - - - - - -
-#                 Makes use of the Portfolio API's advanced paging
-#                 capabilities by changing the items per page to 1 and then
-#                 returning a random page containing a single item. Note that
-#                 this method is used because - even though Portfolio
-#                 automatically assigns an Item ID during the cataloging
-#                 process - there are often breaks in the Item ID sequence
-#                 due to item deletion - - - - - - - - - - - - - - - - - - - -
-
 def find_random_id():
+    """Finds a random record ID and sets the global random_id to that value (for other functions to use)"""
     find_id_url = f"{SERVER_URL}/api/v1/catalog/{catalog_id}/asset/?session={API_TOKEN}"
+
+    # Record IDs aren't entirely sequential; as records are deleted, the IDs disappear.
+    # To work around this we use Portfolio's paging capabilities to set the items
+    # per page to 1, then pick a random page.
     random_asset_index = random.randint(0, total_assets)
     find_id_data = f'{{"fields":["Item ID","Filename"],"pageSize":1,"startingIndex":{random_asset_index},' \
                    f'"sortOptions":{{"field":"RID","order":"desc"}},}} '
@@ -140,14 +119,8 @@ def find_random_id():
             random_id = int(assets['assets'][0]['id'])
 
 
-# --- [  END  ] : Find Random ID - - - - - - - - - - - - - - - - - - - -
-
-
-# --- [ START ] : Get Asset - - - - - - - - - - - - - - - - - - - - - - -
-#                 Returns an array containing both the Filename and
-#                 Keywords for the random Item ID - - - - - - - - - - - -
-
 def get_asset():
+    """Returns and prints the filename and keywords for a random item set by find_random_id()"""
     get_asset_url = f"{SERVER_URL}/api/v1/catalog/{catalog_id}/asset/?session={API_TOKEN}"
     get_asset_data = f'{{"fields":["Item ID","Filename","Keywords"],"pageSize":10,"startingIndex":0,"sortOptions":{{' \
                      f'"field":"RID","order":"desc"}},"term":{{"operator":"assetsById","values":[{random_id}]}}}} '
@@ -191,16 +164,8 @@ def get_asset():
                 print("[ Save Random Metadata ] : [ ERROR ! ] - [ No Available Keywords ! ]\n")
 
 
-# --- [  END  ] : Get Asset - - - - - - - - - - - - - - - - - - - - - - - - -
-
-
-# --- [ START ] : Save Random Preview - - - - - - - - - - - - - - - - - - - -
-#                 Saves the Item's JPEG Preview. Note that during the
-#                 cataloging process , Portfolio automatically generates both
-#                 a Thumbnail ( 256 pixels ) and an intermediary  Preview
-#                 ( default of 1600 pixels )  - - - - - - - - - - - - - - - -
-
 def save_random_preview():
+    """Saves the JPEG preview for the random record to the folder specified by IMAGES_PATH"""
     try:
         os.makedirs(IMAGES_PATH)
     except OSError:
@@ -213,7 +178,6 @@ def save_random_preview():
 
     try:
         save_random_request = http.request("GET", save_random_url)
-        # print(f"save_random_request.data is {save_random_request.data}")
         save_random_body = save_random_request.data
 
         with open(os.path.join(IMAGES_PATH, random_filename), 'wb') as preview:
@@ -223,13 +187,8 @@ def save_random_preview():
         print(f"\n[ Find Assets ] : [ ERROR ! ] : Unable to Connect to {error.url}!\n")
 
 
-# --- [  END  ] : Save Random Preview - - - - - - - - - - - - - - - - - - - -
-
-
-# --- [ START ] : Save Random Metadata - - - - - - - - - - - - - - - - - - - -
-#                 Saves the Keyword metadata as a CSV text file - - - - - - -
-
 def save_random_metadata():
+    """Saves the metadata for the random record to a CSV text file to the folder specified by METADATA_PATH"""
     global random_metadata
 
     try:
@@ -248,15 +207,9 @@ def save_random_metadata():
         print("\n[ Find Assets ] : [ ERROR ! ] : Unable to Connect to {error.url}!\n")
 
 
-# --- [  END  ] : Save Random Metadata - - - - - - - - - - - - - - - - - - - -
-
-
-# --- [ START ] : logout - - - - - - - - - - - - - - - - - - - -
-#                 Session logout. Note that this is not normally
-#                 needed as there is no connection limit nor
-#                 timeout for RESTful API connections - - - - -
-
 def logout():
+    """Logs out our user session. In practice this isn't normally needed as there is no
+    connection limit or timeout for REST API connections"""
     logout_url = f"{SERVER_URL}/api/v1/auth/logout?session={API_TOKEN}"
     logout_data = '{}'
 
@@ -274,8 +227,7 @@ def logout():
         print(f"logout_response is {logout_response}")
 
 
-# --- [  END  ] : Logout - - - - - - - - - - - - - - - - - - - -
-
+# Show off what we can do
 
 get_catalogs()
 
