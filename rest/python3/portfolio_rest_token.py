@@ -7,11 +7,11 @@ import os
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 SERVER_PROTOCOL = "http"  # - - - - "http" or "https"
-SERVER_ADDRESS = "192.168.1.202"
+SERVER_ADDRESS = "playground.extensis.com"
 SERVER_PORT = "8090"  # - - - - - - "8090" for http / "9443" for https
 SERVER_URL = f"{SERVER_PROTOCOL}://{SERVER_ADDRESS}:{SERVER_PORT}"
-API_TOKEN = "TOKEN-db3055e8-df7c-41de-955f-3a1544e491d8"
-TARGET_CATALOG = "Assets"
+API_TOKEN = "TOKEN-e554ed0f-5438-4576-bfc4-fe562d972920"
+TARGET_CATALOG = "DEMO - Stock Photography"
 IMAGES_PATH = "Assets"
 METADATA_PATH = "Metadata"
 
@@ -74,8 +74,8 @@ def get_catalogs():
 def find_number_assets():
     find_number_url = f"{SERVER_URL}/api/v1/catalog/{catalog_id}/asset/?session={API_TOKEN}"
     find_number_data = '{"fields":["Item ID","Filename"],"pageSize":1,"startingIndex":0,"sortOptions":{' \
-                       '"field":"Cataloged","order":"desc"},} '
-    print(f"find_number_data is {find_number_data}")
+                       '"field":"Cataloged","order":"desc"},}'
+    # print(f"find_number_data is {find_number_data}")
 
     try:
         find_number_request = http.request("POST", find_number_url, body=find_number_data,
