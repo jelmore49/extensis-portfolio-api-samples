@@ -7,10 +7,10 @@ import os
 
 # Constants
 
-SERVER_PROTOCOL = "http" # "http" or "https"
 SERVER_ADDRESS = "playground.extensis.com"
-SERVER_PORT = "8090" # Portfolio uses "8090" for HTTP and "9443" for HTTPS by default
-SERVER_URL = f"{SERVER_PROTOCOL}://{SERVER_ADDRESS}:{SERVER_PORT}" # Our server URL
+SERVER_HTTP_PORT = "8090" # Default port
+SERVER_HTTPS_PORT = "9443" # Default port
+USE_HTTPS = True
 API_TOKEN = "TOKEN-e554ed0f-5438-4576-bfc4-fe562d972920" # API token; see Portfolio docs on how to generate
 REQUEST_HEADERS = {'Accept': 'application/json, text/plain, */*', 'Content-Type': 'application/json;charset=UTF-8'}
 
@@ -19,7 +19,6 @@ PREVIEWS_FOLDER = "Previews" # Folder to save downloaded previews on disk
 METADATA_FOLDER = "Metadata" # Folder to save downloaded metadata on disk
 
 # Start our PoolManager
-
 http = urllib3.PoolManager()
 
 
@@ -214,8 +213,13 @@ def logout(server_url, session):
 
 ### Show off what we can do
 
-print(f"Getting a list of catalogs from {SERVER_URL}...")
-catalogs = get_catalogs(server_url=SERVER_URL, session=API_TOKEN)
+if USE_HTTPS:
+    demo_url = f"https://{SERVER_ADDRESS}:{SERVER_HTTPS_PORT}"
+else:
+    demo_url = f"http://{SERVER_ADDRESS}:{SERVER_HTTP_PORT}"
+
+print(f"Getting a list of catalogs from {demo_url}...")
+catalogs = get_catalogs(server_url=demo_url, session=API_TOKEN)
 
 if catalogs == []:
     print("No catalogs are available, exiting\n")
@@ -232,7 +236,7 @@ for catalog in catalogs:
         catalog_id = catalog['id']
 
 print(f"\nGetting the total number of assets in '{demo_catalog}'...")
-total_assets = get_catalog_asset_count(server_url=SERVER_URL, session=API_TOKEN, catalog_id=catalog_id)
+total_assets = get_catalog_asset_count(server_url=demo_url, session=API_TOKEN, catalog_id=catalog_id)
 
 if total_assets == 0:
     print(f"'{demo_catalog}' has no assets, exiting")
@@ -247,7 +251,7 @@ print("(In practice, you wouldn't do this: you'd submit search terms to get a us
 
 random_asset_index = random.randint(0, total_assets)
 print(f"Our random asset index is {random_asset_index}")
-random_asset_id = get_asset_id(server_url=SERVER_URL, session=API_TOKEN, catalog_id=catalog_id, asset_index=random_asset_index)
+random_asset_id = get_asset_id(server_url=demo_url, session=API_TOKEN, catalog_id=catalog_id, asset_index=random_asset_index)
 print(f"The record's ID is {random_asset_id}")
 
 if random_asset_id == 0:
@@ -255,7 +259,7 @@ if random_asset_id == 0:
     exit()
 
 print(f"\nGetting our random Asset from '{demo_catalog}'...")
-test_asset = get_asset(server_url=SERVER_URL, session=API_TOKEN, catalog_id=catalog_id, record_id=random_asset_id)
+test_asset = get_asset(server_url=demo_url, session=API_TOKEN, catalog_id=catalog_id, record_id=random_asset_id)
 
 if test_asset == {}:
     print(f"We have no Asset to work with, exiting")
@@ -275,15 +279,15 @@ print(*test_asset_fields['Keywords'], sep="; ")
 # print(f"The full content of the Asset record is:\n{test_asset_pretty}")
 
 print(f"Getting the preview for '{test_asset_filename}'...")
-save_asset_preview(server_url=SERVER_URL, session=API_TOKEN, catalog_id=catalog_id, asset=test_asset, folder_path=PREVIEWS_FOLDER)
+save_asset_preview(server_url=demo_url, session=API_TOKEN, catalog_id=catalog_id, asset=test_asset, folder_path=PREVIEWS_FOLDER)
 
 print(f"Getting the original file for '{test_asset_filename}'...")
-save_asset_file(server_url=SERVER_URL, session=API_TOKEN, catalog_id=catalog_id, asset=test_asset, folder_path=ASSETS_FOLDER)
+save_asset_file(server_url=demo_url, session=API_TOKEN, catalog_id=catalog_id, asset=test_asset, folder_path=ASSETS_FOLDER)
 
 print(f"Saving metadata for '{test_asset_filename}' to a text file...")
-save_asset_metadata(server_url=SERVER_URL, session=API_TOKEN, catalog_id=catalog_id, asset=test_asset, folder_path=METADATA_FOLDER)
+save_asset_metadata(server_url=demo_url, session=API_TOKEN, catalog_id=catalog_id, asset=test_asset, folder_path=METADATA_FOLDER)
 
-if logout(server_url=SERVER_URL, session=API_TOKEN):
+if logout(server_url=demo_url, session=API_TOKEN):
     print("\nSession logout successful.")
 else:
     print("\nSession logout failed.")
