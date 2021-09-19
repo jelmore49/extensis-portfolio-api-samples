@@ -143,7 +143,7 @@ def save_asset_file(server_url, catalog_id, session, asset, folder_path):
 
 
 def save_asset_metadata(server_url, catalog_id, session, asset, folder_path):
-    """Saves the metadata for the random record to a tab-delimited text file to the folder specified by METADATA_FOLDER"""
+    """Saves the metadata for the Asset in a tab-delimited text file to the folder specified by folder_path"""
     try:
         os.makedirs(folder_path)
     except OSError:
