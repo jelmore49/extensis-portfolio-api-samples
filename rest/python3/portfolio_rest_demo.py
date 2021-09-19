@@ -13,7 +13,7 @@ SERVER_PORT = "8090" # Portfolio uses "8090" for HTTP and "9443" for HTTPS by de
 SERVER_URL = f"{SERVER_PROTOCOL}://{SERVER_ADDRESS}:{SERVER_PORT}" # Our server URL
 API_TOKEN = "TOKEN-e554ed0f-5438-4576-bfc4-fe562d972920" # API token; see Portfolio docs on how to generate
 REQUEST_HEADERS = {'Accept': 'application/json, text/plain, */*', 'Content-Type': 'application/json;charset=UTF-8'}
-TARGET_CATALOG = "DEMO - Stock Photography" # Used for retrieving assets
+
 ASSETS_FOLDER = "Originals" # Folder to save downloaded assets on disk
 PREVIEWS_FOLDER = "Previews" # Folder to save downloaded previews on disk
 METADATA_FOLDER = "Metadata" # Folder to save downloaded metadata on disk
@@ -227,24 +227,22 @@ catalog_names = [catalog['name'] for catalog in catalogs]
 print("Available catalogs:")
 print(*catalog_names, sep=", ")
 
-if TARGET_CATALOG not in catalog_names:
-    print(f"Can't find target catalog '{TARGET_CATALOG}', exiting\n")
-    exit()
-
+demo_catalog = random.choice(catalog_names)
+print(f"We're going to use '{demo_catalog}'")
 for catalog in catalogs:
-    if catalog['name'] == TARGET_CATALOG:
+    if catalog['name'] == demo_catalog:
         catalog_id = catalog['id']
 
-print(f"\nGetting the total number of assets in '{TARGET_CATALOG}'...")
+print(f"\nGetting the total number of assets in '{demo_catalog}'...")
 total_assets = get_catalog_asset_count(server_url=SERVER_URL, session=API_TOKEN, catalog_id=catalog_id)
 
 if total_assets == 0:
-    print(f"'{TARGET_CATALOG}' has no assets, exiting")
+    print(f"'{demo_catalog}' has no assets, exiting")
     exit()
 
-print(f"'{TARGET_CATALOG}' has {total_assets} assets")
+print(f"'{demo_catalog}' has {total_assets} assets")
 
-print(f"\nGetting a random record ID from '{TARGET_CATALOG}'...")
+print(f"\nGetting a random record ID from '{demo_catalog}'...")
 print("(In practice, you wouldn't do this: you'd submit search terms to get a useful set\n" \
     "of assets back. Since we don't know what is in the catalog,\n" \
     "we're choosing a random asset. See get_asset_id() for an explanation of how we do this.)")
@@ -258,7 +256,7 @@ if random_asset_id == 0:
     print(f"We don't have a valid record ID, exiting")
     exit()
 
-print(f"\nGetting our random Asset from '{TARGET_CATALOG}'...")
+print(f"\nGetting our random Asset from '{demo_catalog}'...")
 test_asset = get_asset(server_url=SERVER_URL, session=API_TOKEN, catalog_id=catalog_id, record_id=random_asset_id)
 
 if test_asset == {}:
