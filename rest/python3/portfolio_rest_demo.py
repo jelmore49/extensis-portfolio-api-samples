@@ -12,7 +12,8 @@ SERVER_HTTP_PORT = "8090" # Default port
 SERVER_HTTPS_PORT = "9443" # Default port
 USE_HTTPS = True
 API_TOKEN = "TOKEN-e554ed0f-5438-4576-bfc4-fe562d972920" # API token; see Portfolio docs on how to generate
-REQUEST_HEADERS = {'Accept': 'application/json, text/plain, */*', 'Content-Type': 'application/json;charset=UTF-8'}
+REQUEST_HEADERS = {'Accept': 'application/json, text/plain, */*',
+                   'Content-Type': 'application/json;charset=UTF-8'}
 
 ASSETS_FOLDER = "Originals" # Folder to save downloaded assets on disk
 PREVIEWS_FOLDER = "Previews" # Folder to save downloaded previews on disk
