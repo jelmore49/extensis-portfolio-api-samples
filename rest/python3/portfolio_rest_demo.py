@@ -67,11 +67,11 @@ def get_asset_id(server_url, catalog_id, session, asset_index):
     Returns 0 if we can't connect to the server.
     Record IDs (RIDs) aren't entirely sequential; as records are deleted, the RIDs disappear.
     To avoid requesting an nonexistant record we use Portfolio's paging capabilities:
-    we request the entire catalog, set the assets per page to 1 in our response,
-    sort the pages by RID, then get the asset_index-th page and return the RID of that asset.
+    we query the RIDs of entire catalog, set the items per page to 1 in our response,
+    sort the pages by RID, then get the asset_index-th page and return the RID of that item.
     """
     request_url = f"{server_url}/api/v1/catalog/{catalog_id}/asset/?session={session}"
-    request_body = {'fields': ["Item ID", "Filename"],
+    request_body = {'fields': ["Item ID"],
                     'pageSize': 1,
                     'startingIndex': asset_index,
                     'sortOptions': {'field': "RID", 'order': "desc"}}
