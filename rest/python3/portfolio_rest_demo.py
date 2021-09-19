@@ -130,7 +130,6 @@ def save_asset_file(server_url, catalog_id, session, asset, folder_path):
 
     request_url = f"{server_url}/api/v1/catalog/{catalog_id}/asset/{asset}/_original?session={session}"
     filename = asset['attributes']['Filename'][0]
-    print(f"save_asset_file: filename is {filename}")
 
     try:
         request = http.request("GET", request_url)
@@ -177,7 +176,6 @@ def save_asset_preview(server_url, catalog_id, session, asset, folder_path):
 
     request_url = f"{server_url}/api/v1/catalog/{catalog_id}/asset/{asset}/preview?session={session}"
     filename = f"Preview of {asset['attributes']['Filename'][0]}"
-    print(f"save_asset_preview: filename is {filename}")
 
     try:
         request = http.request("GET", request_url)
