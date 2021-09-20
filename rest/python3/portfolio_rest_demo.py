@@ -17,7 +17,7 @@ USE_HTTPS = True
 LOGIN_USERNAME = "administrator"
 LOGIN_PASSWORD = "password"
 API_TOKEN = "TOKEN-e554ed0f-5438-4576-bfc4-fe562d972920"  # API token; see Portfolio docs on how to generate
-USE_API_TOKEN = True
+USE_API_TOKEN = False
 
 REQUEST_HEADERS = {'Accept': 'application/json, text/plain, */*',
                    'Content-Type': 'application/json;charset=UTF-8'}
@@ -28,7 +28,6 @@ METADATA_FOLDER = "Metadata"  # Folder to save downloaded metadata on disk
 
 # Start our PoolManager
 http = urllib3.PoolManager()
-
 
 # Functions
 
