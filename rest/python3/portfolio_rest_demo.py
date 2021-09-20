@@ -245,10 +245,15 @@ print("Available catalogs:")
 print(*catalog_names, sep=", ")
 
 demo_catalog = random.choice(catalog_names)
+demo_catalog_id = ""
 print(f"We're going to use '{demo_catalog}'")
 for catalog in catalogs:
     if catalog['name'] == demo_catalog:
         demo_catalog_id = catalog['id']
+
+if demo_catalog_id == "":
+    print("ERROR: We can't get the catalog's ID for some reason, exiting\n")
+    exit()
 
 print(f"\nGetting the total number of assets in '{demo_catalog}'...")
 total_assets = get_catalog_asset_count(server_url=demo_url, session=API_TOKEN, catalog_id=demo_catalog_id)
