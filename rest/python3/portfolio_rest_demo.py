@@ -118,7 +118,7 @@ def get_asset(server_url, catalog_id, session, record_id):
         return response['assets'][0]
 
 
-def save_asset_file(server_url, catalog_id, session, asset, folder_path):
+def save_asset_original(server_url, catalog_id, session, asset, folder_path):
     """Saves the original file for the Asset to the folder specified by folder_path"""
 
     try:
@@ -128,18 +128,20 @@ def save_asset_file(server_url, catalog_id, session, asset, folder_path):
             print(f"Can't create {folder_path}")
             raise
 
-    request_url = f"{server_url}/api/v1/catalog/{catalog_id}/asset/{asset}/_original?session={session}"
+    original_asset_id = asset['id']
+
+    request_url = f"{server_url}/api/v1/catalog/{catalog_id}/asset/{original_asset_id}/_original?session={session}"
     filename = asset['attributes']['Filename'][0]
 
     try:
         request = http.request("GET", request_url)
         response = request.data
 
-        with open(os.path.join(folder_path, filename), 'wb') as preview:
-            preview.write(response)
+        with open(os.path.join(folder_path, filename), 'wb') as original:
+            original.write(response)
 
     except urllib3.exceptions.RequestError:
-        print(f"ERROR: save_asset_file failed to connect to {request_url}\n")
+        print(f"ERROR: save_asset_original failed to connect to {request_url}\n")
 
 
 def save_asset_metadata(server_url, catalog_id, session, asset, folder_path):
@@ -173,8 +175,10 @@ def save_asset_preview(server_url, catalog_id, session, asset, folder_path):
         if not os.path.isdir(folder_path):
             print(f"Can't create {folder_path}")
             raise
+    
+    preview_asset_id = asset['id']
 
-    request_url = f"{server_url}/api/v1/catalog/{catalog_id}/asset/{asset}/preview?session={session}"
+    request_url = f"{server_url}/api/v1/catalog/{catalog_id}/asset/{preview_asset_id}/preview?session={session}"
     filename = f"Preview of {asset['attributes']['Filename'][0]}"
 
     try:
@@ -283,7 +287,7 @@ print(f"Getting the preview for '{test_asset_filename}'...")
 save_asset_preview(server_url=demo_url, session=API_TOKEN, catalog_id=catalog_id, asset=test_asset, folder_path=PREVIEWS_FOLDER)
 
 print(f"Getting the original file for '{test_asset_filename}'...")
-save_asset_file(server_url=demo_url, session=API_TOKEN, catalog_id=catalog_id, asset=test_asset, folder_path=ASSETS_FOLDER)
+save_asset_original(server_url=demo_url, session=API_TOKEN, catalog_id=catalog_id, asset=test_asset, folder_path=ASSETS_FOLDER)
 
 print(f"Saving metadata for '{test_asset_filename}' to a text file...")
 save_asset_metadata(server_url=demo_url, session=API_TOKEN, catalog_id=catalog_id, asset=test_asset, folder_path=METADATA_FOLDER)
