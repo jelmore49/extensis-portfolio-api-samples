@@ -47,7 +47,7 @@ def get_asset(server_url, catalog_id, session, record_id):
         response = json.loads(response_body)
 
     except urllib3.exceptions.RequestError:
-        print(f"ERROR: get_asset failed to connect to {request_url}\n")
+        print(f"ERROR: get_asset() failed to connect to {request_url}\n")
         return {}
 
     else:
@@ -74,7 +74,7 @@ def get_asset_id(server_url, catalog_id, session, asset_index):
         response = json.loads(response_body)
 
     except urllib3.exceptions.RequestError:
-        print(f"ERROR: get_asset_id failed to connect to {request_url}\n")
+        print(f"ERROR: get_asset_id() failed to connect to {request_url}\n")
         return 0
 
     else:
@@ -107,7 +107,7 @@ def get_catalog_asset_count(server_url, catalog_id, session):
         return response['totalNumberOfAssets']
 
     except urllib3.exceptions.RequestError:
-        print(f"ERROR: get_catalog_asset_count failed to connect to {request_url}\n")
+        print(f"ERROR: get_catalog_asset_count() failed to connect to {request_url}\n")
         return 0
 
 
@@ -123,7 +123,7 @@ def get_catalogs(server_url, session):
         return json.loads(response_body)
 
     except urllib3.exceptions.RequestError:
-        print(f"ERROR: get_catalogs failed to connect to {request_url}\n")
+        print(f"ERROR: get_catalogs() failed to connect to {request_url}\n")
         return []
 
 
@@ -176,7 +176,7 @@ def logout(server_url, session):
         response_body = request.data.decode('UTF-8')
 
     except urllib3.exceptions.RequestError:
-        print(f"ERROR: logout failed to connect to {request_url}\n")
+        print(f"ERROR: logout() failed to connect to {request_url}\n")
         return False
     else:
         if response_body == "":
@@ -234,7 +234,7 @@ def save_asset_original(server_url, catalog_id, session, asset, folder_path):
             original.write(response)
 
     except urllib3.exceptions.RequestError:
-        print(f"ERROR: save_asset_original failed to connect to {request_url}\n")
+        print(f"ERROR: save_asset_original() failed to connect to {request_url}\n")
 
 
 def save_asset_preview(server_url, catalog_id, session, asset, folder_path):
@@ -260,7 +260,7 @@ def save_asset_preview(server_url, catalog_id, session, asset, folder_path):
             preview.write(response)
 
     except urllib3.exceptions.RequestError:
-        print(f"ERROR: save_asset_preview failed to connect to {request_url}\n")
+        print(f"ERROR: save_asset_preview() failed to connect to {request_url}\n")
 
 
 #
