@@ -121,7 +121,7 @@ def get_asset(server_url, catalog_id, session, record_id):
         return response['assets'][0]
 
 
-def save_asset_metadata(server_url, catalog_id, session, asset, folder_path):
+def save_asset_metadata(asset, folder_path):
     """Saves the metadata for the Asset in a tab-delimited text file to the folder specified by folder_path"""
     try:
         os.makedirs(folder_path)
@@ -287,7 +287,7 @@ print(*test_asset_fields['Keywords'], sep="; ")
 # print(f"The full content of the Asset record is:\n{test_asset_pretty}")
 
 print(f"Saving metadata for '{test_asset_filename}' to a text file...")
-save_asset_metadata(server_url=demo_url, session=API_TOKEN, catalog_id=catalog_id, asset=test_asset, folder_path=METADATA_FOLDER)
+save_asset_metadata(asset=test_asset, folder_path=METADATA_FOLDER)
 
 print(f"Getting the original file for '{test_asset_filename}'...")
 save_asset_original(server_url=demo_url, session=API_TOKEN, catalog_id=catalog_id, asset=test_asset, folder_path=ASSETS_FOLDER)
