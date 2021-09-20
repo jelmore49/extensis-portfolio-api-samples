@@ -13,7 +13,12 @@ SERVER_ADDRESS = "playground.extensis.com"
 SERVER_HTTP_PORT = "8090"  # Default port
 SERVER_HTTPS_PORT = "9443"  # Default port
 USE_HTTPS = True
+
+LOGIN_USERNAME = "administrator"
+LOGIN_USERNAME = "password"
 API_TOKEN = "TOKEN-e554ed0f-5438-4576-bfc4-fe562d972920"  # API token; see Portfolio docs on how to generate
+USE_TOKEN = True
+
 REQUEST_HEADERS = {'Accept': 'application/json, text/plain, */*',
                    'Content-Type': 'application/json;charset=UTF-8'}
 
@@ -204,6 +209,11 @@ def logout(server_url, session):
     This isn't needed for API tokens, as they don't take up a Portfolio user seat, but you should
     do this for username/password logins so the seat is released.
     """
+
+    if session[0:5] == "TOKEN":
+        print("We're using an API token so no logout is required.")
+        return True
+
     request_url = f"{server_url}/api/v1/auth/logout?session={session}"
     request_body = "{}"  # This is an empty object so there's no reason to use json.dumps()
 
@@ -228,13 +238,21 @@ def logout(server_url, session):
 # Show off what we can do
 #
 
+if not USE_TOKEN:
+    # do the user login thing
+    # session_id = user_session
+    pass
+else:
+    print("We're using an API token to log in.")
+    session_id = API_TOKEN
+
 if USE_HTTPS:
     demo_url = f"https://{SERVER_ADDRESS}:{SERVER_HTTPS_PORT}"
 else:
     demo_url = f"http://{SERVER_ADDRESS}:{SERVER_HTTP_PORT}"
 
 print(f"Getting a list of catalogs from {demo_url}...")
-catalogs = get_catalogs(server_url=demo_url, session=API_TOKEN)
+catalogs = get_catalogs(server_url=demo_url, session=session_id)
 
 if not catalogs:  # If the list is empty
     print("ERROR: No catalogs are available, exiting\n")
@@ -256,7 +274,7 @@ if demo_catalog_id == "":
     exit()
 
 print(f"\nGetting the total number of assets in '{demo_catalog}'...")
-total_assets = get_catalog_asset_count(server_url=demo_url, session=API_TOKEN, catalog_id=demo_catalog_id)
+total_assets = get_catalog_asset_count(server_url=demo_url, session=session_id, catalog_id=demo_catalog_id)
 
 if total_assets == 0:
     print(f"ERROR: '{demo_catalog}' has no assets, exiting")
@@ -271,7 +289,7 @@ print("(In practice, you wouldn't do this: you'd submit search terms to get a us
 
 random_asset_index = random.randint(0, total_assets)
 print(f"Our random asset index is {random_asset_index}")
-random_asset_id = get_asset_id(server_url=demo_url, session=API_TOKEN, catalog_id=demo_catalog_id,
+random_asset_id = get_asset_id(server_url=demo_url, session=session_id, catalog_id=demo_catalog_id,
                                asset_index=random_asset_index)
 print(f"The record's ID is {random_asset_id}")
 
@@ -280,7 +298,7 @@ if random_asset_id == 0:
     exit()
 
 print(f"\nGetting our random Asset from '{demo_catalog}'...")
-test_asset = get_asset(server_url=demo_url, session=API_TOKEN, catalog_id=demo_catalog_id, record_id=random_asset_id)
+test_asset = get_asset(server_url=demo_url, session=session_id, catalog_id=demo_catalog_id, record_id=random_asset_id)
 
 if test_asset == {}:
     print(f"ERROR: We have no Asset to work with, exiting")
@@ -303,14 +321,14 @@ print(f"Saving metadata for '{test_asset_filename}' to a text file...")
 save_asset_metadata(asset=test_asset, folder_path=METADATA_FOLDER)
 
 print(f"Getting the original file for '{test_asset_filename}'...")
-save_asset_original(server_url=demo_url, session=API_TOKEN, catalog_id=demo_catalog_id, asset=test_asset,
+save_asset_original(server_url=demo_url, session=session_id, catalog_id=demo_catalog_id, asset=test_asset,
                     folder_path=ASSETS_FOLDER)
 
 print(f"Getting the preview for '{test_asset_filename}'...")
-save_asset_preview(server_url=demo_url, session=API_TOKEN, catalog_id=demo_catalog_id, asset=test_asset,
+save_asset_preview(server_url=demo_url, session=session_id, catalog_id=demo_catalog_id, asset=test_asset,
                    folder_path=PREVIEWS_FOLDER)
 
-if logout(server_url=demo_url, session=API_TOKEN):
+if logout(server_url=demo_url, session=session_id):
     print("\nSession logout successful.")
 else:
     print("\nSession logout failed.")
