@@ -283,14 +283,14 @@ print(*test_asset_fields['Keywords'], sep="; ")
 # test_asset_pretty = json.dumps(test_asset, sort_keys=True, indent=2, separators=(',', ': '))
 # print(f"The full content of the Asset record is:\n{test_asset_pretty}")
 
-print(f"Getting the preview for '{test_asset_filename}'...")
-save_asset_preview(server_url=demo_url, session=API_TOKEN, catalog_id=catalog_id, asset=test_asset, folder_path=PREVIEWS_FOLDER)
+print(f"Saving metadata for '{test_asset_filename}' to a text file...")
+save_asset_metadata(server_url=demo_url, session=API_TOKEN, catalog_id=catalog_id, asset=test_asset, folder_path=METADATA_FOLDER)
 
 print(f"Getting the original file for '{test_asset_filename}'...")
 save_asset_original(server_url=demo_url, session=API_TOKEN, catalog_id=catalog_id, asset=test_asset, folder_path=ASSETS_FOLDER)
 
-print(f"Saving metadata for '{test_asset_filename}' to a text file...")
-save_asset_metadata(server_url=demo_url, session=API_TOKEN, catalog_id=catalog_id, asset=test_asset, folder_path=METADATA_FOLDER)
+print(f"Getting the preview for '{test_asset_filename}'...")
+save_asset_preview(server_url=demo_url, session=API_TOKEN, catalog_id=catalog_id, asset=test_asset, folder_path=PREVIEWS_FOLDER)
 
 if logout(server_url=demo_url, session=API_TOKEN):
     print("\nSession logout successful.")
