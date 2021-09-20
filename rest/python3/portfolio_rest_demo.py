@@ -118,6 +118,28 @@ def get_asset(server_url, catalog_id, session, record_id):
         return response['assets'][0]
 
 
+def save_asset_metadata(server_url, catalog_id, session, asset, folder_path):
+    """Saves the metadata for the Asset in a tab-delimited text file to the folder specified by folder_path"""
+    try:
+        os.makedirs(folder_path)
+    except OSError:
+        if not os.path.isdir(folder_path):
+            print(f"Can't create {folder_path}")
+            raise
+
+    # We're only saving a subset of fields
+    output_fields = ("Cataloged By","Cataloged","Created","Directory Path","Height","Keywords",
+                     "Last Modified","Last Updated","Updated By", "Width")
+    asset_fields = asset['attributes']
+    filename = f"{asset_fields['Filename'][0]} - Metadata.txt"
+
+    with open(os.path.join(folder_path, filename), 'w') as metadata:
+        for key in output_fields:
+            if isinstance(asset_fields[key][0], int):
+                metadata.write(f"{key}\t{asset_fields[key][0]}\n") # If it's an integer we write it directly
+            else:
+                metadata.write(f"{key}\t{','.join(asset_fields[key])}\n") # If it's not then we join the list (even one-item lists)
+
 def save_asset_original(server_url, catalog_id, session, asset, folder_path):
     """Saves the original file for the Asset to the folder specified by folder_path"""
 
@@ -143,28 +165,6 @@ def save_asset_original(server_url, catalog_id, session, asset, folder_path):
     except urllib3.exceptions.RequestError:
         print(f"ERROR: save_asset_original failed to connect to {request_url}\n")
 
-
-def save_asset_metadata(server_url, catalog_id, session, asset, folder_path):
-    """Saves the metadata for the Asset in a tab-delimited text file to the folder specified by folder_path"""
-    try:
-        os.makedirs(folder_path)
-    except OSError:
-        if not os.path.isdir(folder_path):
-            print(f"Can't create {folder_path}")
-            raise
-
-    # We're only saving a subset of fields
-    output_fields = ("Cataloged By","Cataloged","Created","Directory Path","Height","Keywords",
-                     "Last Modified","Last Updated","Updated By", "Width")
-    asset_fields = asset['attributes']
-    filename = f"{asset_fields['Filename'][0]} - Metadata.txt"
-
-    with open(os.path.join(folder_path, filename), 'w') as metadata:
-        for key in output_fields:
-            if isinstance(asset_fields[key][0], int):
-                metadata.write(f"{key}\t{asset_fields[key][0]}\n") # If it's an integer we write it directly
-            else:
-                metadata.write(f"{key}\t{','.join(asset_fields[key])}\n") # If it's not then we join the list (even one-item lists)
 
 def save_asset_preview(server_url, catalog_id, session, asset, folder_path):
     """Saves the JPEG preview for the Asset to the folder specified by folder_path"""
