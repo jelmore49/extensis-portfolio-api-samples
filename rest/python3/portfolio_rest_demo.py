@@ -17,7 +17,7 @@ USE_HTTPS = True
 LOGIN_USERNAME = "administrator"
 LOGIN_USERNAME = "password"
 API_TOKEN = "TOKEN-e554ed0f-5438-4576-bfc4-fe562d972920"  # API token; see Portfolio docs on how to generate
-USE_TOKEN = True
+USE_API_TOKEN = True
 
 REQUEST_HEADERS = {'Accept': 'application/json, text/plain, */*',
                    'Content-Type': 'application/json;charset=UTF-8'}
@@ -236,7 +236,7 @@ def save_asset_preview(server_url, catalog_id, session, asset, folder_path):
 # Show off what we can do
 #
 
-if not USE_TOKEN:
+if not USE_API_TOKEN:
     # do the user login thing
     # session_id = user_session
     pass
