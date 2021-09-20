@@ -32,43 +32,26 @@ http = urllib3.PoolManager()
 
 # Functions
 
-def get_catalogs(server_url, session):
-    """Returns an array of available catalogs.
-    Returns an empty array if we can't connect to the server.
-    """
-    request_url = f"{server_url}/api/v1/catalog?session={session}"
-
-    try:
-        request = http.request("GET", request_url)
-        response_body = request.data.decode('UTF-8')
-        return json.loads(response_body)
-
-    except urllib3.exceptions.RequestError:
-        print(f"ERROR: get_catalogs failed to connect to {request_url}\n")
-        return []
-
-
-def get_catalog_asset_count(server_url, catalog_id, session):
-    """Returns the number of assets in a catalog.
-    Returns 0 if we can't connect to the server.
-    """
+def get_asset(server_url, catalog_id, session, record_id):
+    """Returns the Asset with the record ID of record_id"""
     request_url = f"{server_url}/api/v1/catalog/{catalog_id}/asset/?session={session}"
-    # All we want is the totalNumberOfAssets field in the response so we make the smallest query possible;
-    # we're requesting a single Asset but we don't do anything with it
-    request_body = {'fields': ["Filename"],  # If we don't specify at least one field, we get all of them
-                    'pageSize': 1,
+    request_body = {'pageSize': 1,
                     'startingIndex': 0,
-                    'sortOptions': {'field': "Cataloged", 'order': "desc"}}
+                    'sortOptions': {'field': "RID", 'order': "desc"},
+                    'term': {'operator': "assetsById", 'values': [record_id]}}
 
     try:
         request = http.request("POST", request_url, body=json.dumps(request_body), headers=REQUEST_HEADERS)
+
         response_body = request.data.decode('UTF-8')
         response = json.loads(response_body)
-        return response['totalNumberOfAssets']
 
     except urllib3.exceptions.RequestError:
-        print(f"ERROR: get_catalog_asset_count failed to connect to {request_url}\n")
-        return 0
+        print(f"ERROR: get_asset failed to connect to {request_url}\n")
+        return {}
+
+    else:
+        return response['assets'][0]
 
 
 def get_asset_id(server_url, catalog_id, session, asset_index):
@@ -105,26 +88,71 @@ def get_asset_id(server_url, catalog_id, session, asset_index):
             return int(assets[0]['id'])
 
 
-def get_asset(server_url, catalog_id, session, record_id):
-    """Returns the Asset with the record ID of record_id"""
+def get_catalog_asset_count(server_url, catalog_id, session):
+    """Returns the number of assets in a catalog.
+    Returns 0 if we can't connect to the server.
+    """
     request_url = f"{server_url}/api/v1/catalog/{catalog_id}/asset/?session={session}"
-    request_body = {'pageSize': 1,
+    # All we want is the totalNumberOfAssets field in the response so we make the smallest query possible;
+    # we're requesting a single Asset but we don't do anything with it
+    request_body = {'fields': ["Filename"],  # If we don't specify at least one field, we get all of them
+                    'pageSize': 1,
                     'startingIndex': 0,
-                    'sortOptions': {'field': "RID", 'order': "desc"},
-                    'term': {'operator': "assetsById", 'values': [record_id]}}
+                    'sortOptions': {'field': "Cataloged", 'order': "desc"}}
 
     try:
         request = http.request("POST", request_url, body=json.dumps(request_body), headers=REQUEST_HEADERS)
-
         response_body = request.data.decode('UTF-8')
         response = json.loads(response_body)
+        return response['totalNumberOfAssets']
 
     except urllib3.exceptions.RequestError:
-        print(f"ERROR: get_asset failed to connect to {request_url}\n")
-        return {}
+        print(f"ERROR: get_catalog_asset_count failed to connect to {request_url}\n")
+        return 0
 
+
+def get_catalogs(server_url, session):
+    """Returns an array of available catalogs.
+    Returns an empty array if we can't connect to the server.
+    """
+    request_url = f"{server_url}/api/v1/catalog?session={session}"
+
+    try:
+        request = http.request("GET", request_url)
+        response_body = request.data.decode('UTF-8')
+        return json.loads(response_body)
+
+    except urllib3.exceptions.RequestError:
+        print(f"ERROR: get_catalogs failed to connect to {request_url}\n")
+        return []
+
+
+def logout(server_url, session):
+    """Logs out the user session.
+    This isn't needed for API tokens, as they don't take up a Portfolio user seat, but you should
+    do this for username/password logins so the seat is released.
+    """
+
+    if session[0:5] == "TOKEN":
+        print("We're using an API token so no logout is required.")
+        return True
+
+    request_url = f"{server_url}/api/v1/auth/logout?session={session}"
+    request_body = "{}"  # This is an empty object so there's no reason to use json.dumps()
+
+    try:
+        request = http.request("POST", request_url, body=request_body, headers=REQUEST_HEADERS)
+        response_body = request.data.decode('UTF-8')
+
+    except urllib3.exceptions.RequestError:
+        print(f"ERROR: logout failed to connect to {request_url}\n")
+        return False
     else:
-        return response['assets'][0]
+        if response_body == "":
+            return True
+        else:
+            print(f"Logout response is {response_body}")
+            return False
 
 
 def save_asset_metadata(asset, folder_path):
@@ -202,36 +230,6 @@ def save_asset_preview(server_url, catalog_id, session, asset, folder_path):
 
     except urllib3.exceptions.RequestError:
         print(f"ERROR: save_asset_preview failed to connect to {request_url}\n")
-
-
-def logout(server_url, session):
-    """Logs out the user session.
-    This isn't needed for API tokens, as they don't take up a Portfolio user seat, but you should
-    do this for username/password logins so the seat is released.
-    """
-
-    if session[0:5] == "TOKEN":
-        print("We're using an API token so no logout is required.")
-        return True
-
-    request_url = f"{server_url}/api/v1/auth/logout?session={session}"
-    request_body = "{}"  # This is an empty object so there's no reason to use json.dumps()
-
-    try:
-        request = http.request("POST", request_url, body=request_body, headers=REQUEST_HEADERS)
-        # We're using an API token so there shouldn't be an error. If this was a proper login session,
-        # we want to capture the response in case there is an error.
-        response_body = request.data.decode('UTF-8')
-
-    except urllib3.exceptions.RequestError:
-        print(f"ERROR: logout failed to connect to {request_url}\n")
-        return False
-    else:
-        if response_body == "":
-            return True
-        else:
-            print(f"Logout response is {response_body}")
-            return False
 
 
 #
