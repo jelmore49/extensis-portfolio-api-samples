@@ -237,7 +237,7 @@ print(f"Getting a list of catalogs from {demo_url}...")
 catalogs = get_catalogs(server_url=demo_url, session=API_TOKEN)
 
 if not catalogs:  # If the list is empty
-    print("No catalogs are available, exiting\n")
+    print("ERROR: No catalogs are available, exiting\n")
     exit()
 
 catalog_names = [catalog['name'] for catalog in catalogs]
@@ -259,7 +259,7 @@ print(f"\nGetting the total number of assets in '{demo_catalog}'...")
 total_assets = get_catalog_asset_count(server_url=demo_url, session=API_TOKEN, catalog_id=demo_catalog_id)
 
 if total_assets == 0:
-    print(f"'{demo_catalog}' has no assets, exiting")
+    print(f"ERROR: '{demo_catalog}' has no assets, exiting")
     exit()
 
 print(f"'{demo_catalog}' has {total_assets} assets")
@@ -276,14 +276,14 @@ random_asset_id = get_asset_id(server_url=demo_url, session=API_TOKEN, catalog_i
 print(f"The record's ID is {random_asset_id}")
 
 if random_asset_id == 0:
-    print(f"We don't have a valid record ID, exiting")
+    print(f"ERROR: We don't have a valid record ID, exiting")
     exit()
 
 print(f"\nGetting our random Asset from '{demo_catalog}'...")
 test_asset = get_asset(server_url=demo_url, session=API_TOKEN, catalog_id=demo_catalog_id, record_id=random_asset_id)
 
 if test_asset == {}:
-    print(f"We have no Asset to work with, exiting")
+    print(f"ERROR: We have no Asset to work with, exiting")
     exit()
 
 test_asset_fields = test_asset['attributes']
