@@ -266,8 +266,8 @@ print(f"'{demo_catalog}' has {total_assets} assets")
 
 print(f"\nGetting a random record ID from '{demo_catalog}'...")
 print("(In practice, you wouldn't do this: you'd submit search terms to get a useful set\n"
-      "of assets back. Since we don't know what is in the catalog,\n"
-      "we're choosing a random asset. See get_asset_id() for an explanation of how we do this.)")
+      "of assets back. Since we don't know what is in the catalog, we're choosing a random asset.\n"
+      "See get_asset_id() for an explanation of how we do this.)")
 
 random_asset_index = random.randint(0, total_assets)
 print(f"Our random asset index is {random_asset_index}")
