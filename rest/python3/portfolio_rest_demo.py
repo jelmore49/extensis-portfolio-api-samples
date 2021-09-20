@@ -15,7 +15,7 @@ SERVER_HTTPS_PORT = "9443"  # Default port
 USE_HTTPS = True
 
 LOGIN_USERNAME = "administrator"
-LOGIN_USERNAME = "password"
+LOGIN_PASSWORD = "password"
 API_TOKEN = "TOKEN-e554ed0f-5438-4576-bfc4-fe562d972920"  # API token; see Portfolio docs on how to generate
 USE_API_TOKEN = True
 
@@ -127,6 +127,37 @@ def get_catalogs(server_url, session):
         return []
 
 
+def login(server_url, username, password):
+
+    # TODO: We need to hash the password, this is broken right now
+    password_hash = password
+
+    request_url = f"{server_url}/api/v1/auth/login"
+    request_body = "{}"  # This is an empty object so there's no reason to use json.dumps()
+    request_body = {'userName': username,
+                    'encryptedPassword': password_hash}
+
+    try:
+        request = http.request("POST", request_url, body=json.dumps(request_body), headers=REQUEST_HEADERS)
+        response_body = request.data.decode('UTF-8')
+        response = json.loads(response_body)
+        
+    except urllib3.exceptions.RequestError:
+        print(f"ERROR: logout failed to connect to {request_url}\n")
+        return ""
+    else:
+        if "session" in response:
+            # If 'session' exists, return that
+            return response['session']
+        elif "faultCode" in response:
+            # If 'faultCode' exists, return that
+            print(f"ERROR: could not log in. Fault code {response['faultCode']}, message is {response['message']}")
+            return ""
+        else:
+            print(f"ERROR: could not log in, unknown error.")
+            return ""
+
+
 def logout(server_url, session):
     """Logs out the user session.
     This isn't needed for API tokens, as they don't take up a Portfolio user seat, but you should
@@ -134,7 +165,7 @@ def logout(server_url, session):
     """
 
     if session[0:5] == "TOKEN":
-        print("We're using an API token so no logout is required.")
+        print("We're using an API token so there's no seat to reclaim.")
         return True
 
     request_url = f"{server_url}/api/v1/auth/logout?session={session}"
@@ -236,18 +267,20 @@ def save_asset_preview(server_url, catalog_id, session, asset, folder_path):
 # Show off what we can do
 #
 
-if not USE_API_TOKEN:
-    # do the user login thing
-    # session_id = user_session
-    pass
-else:
-    print("We're using an API token to log in.")
-    session_id = API_TOKEN
-
 if USE_HTTPS:
     demo_url = f"https://{SERVER_ADDRESS}:{SERVER_HTTPS_PORT}"
 else:
     demo_url = f"http://{SERVER_ADDRESS}:{SERVER_HTTP_PORT}"
+
+if not USE_API_TOKEN:
+    print(f"Logging in to {demo_url} with username {LOGIN_USERNAME}...")
+    session_id = login(server_url=demo_url, username=LOGIN_USERNAME, password=LOGIN_PASSWORD)
+    if not session_id: # We got an empty string back for some reason
+        print("ERROR: We didn't get a valid session from login(), exiting.")
+        exit()
+else:
+    print("We're using an API token to log in.")
+    session_id = API_TOKEN
 
 print(f"Getting a list of catalogs from {demo_url}...")
 catalogs = get_catalogs(server_url=demo_url, session=session_id)
@@ -315,7 +348,7 @@ print(*test_asset_fields['Keywords'], sep="; ")
 # test_asset_pretty = json.dumps(test_asset, sort_keys=True, indent=2, separators=(',', ': '))
 # print(f"The full content of the Asset record is:\n{test_asset_pretty}")
 
-print(f"Saving metadata for '{test_asset_filename}' to a text file...")
+print(f"\nSaving metadata for '{test_asset_filename}' to a text file...")
 save_asset_metadata(asset=test_asset, folder_path=METADATA_FOLDER)
 
 print(f"Getting the original file for '{test_asset_filename}'...")
@@ -326,7 +359,8 @@ print(f"Getting the preview for '{test_asset_filename}'...")
 save_asset_preview(server_url=demo_url, session=session_id, catalog_id=demo_catalog_id, asset=test_asset,
                    folder_path=PREVIEWS_FOLDER)
 
+print("\nLogging out of the server...")
 if logout(server_url=demo_url, session=session_id):
-    print("\nSession logout successful.")
+    print("Session logout successful.")
 else:
-    print("\nSession logout failed.")
+    print("Session logout failed.")
