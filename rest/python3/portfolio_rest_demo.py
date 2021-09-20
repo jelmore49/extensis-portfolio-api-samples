@@ -1,3 +1,5 @@
+# TODO: Add option for demoing username/password logins
+
 # Imports
 
 import urllib3
@@ -22,6 +24,7 @@ METADATA_FOLDER = "Metadata" # Folder to save downloaded metadata on disk
 # Start our PoolManager
 http = urllib3.PoolManager()
 
+# Functions
 
 def get_catalogs(server_url, session):
     """Returns an array of available catalogs.
@@ -67,8 +70,8 @@ def get_asset_id(server_url, catalog_id, session, asset_index):
     Returns 0 if we can't connect to the server.
     Record IDs (RIDs) aren't entirely sequential; as records are deleted, the RIDs disappear.
     To avoid requesting an nonexistant record we use Portfolio's paging capabilities:
-    we query the RIDs of entire catalog, set the items per page to 1 in our response,
-    sort the pages by RID, then get the asset_index-th page and return the RID of that item.
+    we query the RIDs of the entire catalog, set the items per page to 1, sort the pages by RID,
+    then get the asset_index-th page and return the RID of that item.
     """
     request_url = f"{server_url}/api/v1/catalog/{catalog_id}/asset/?session={session}"
     request_body = {'fields': ["Item ID"],
@@ -87,7 +90,7 @@ def get_asset_id(server_url, catalog_id, session, asset_index):
 
     else:
         if response['totalNumberOfAssets'] == 0:
-            print("No assets are available.\n")
+            print("ERROR: No assets are available.\n")
             return 0
 
         else:
@@ -124,7 +127,7 @@ def save_asset_metadata(server_url, catalog_id, session, asset, folder_path):
         os.makedirs(folder_path)
     except OSError:
         if not os.path.isdir(folder_path):
-            print(f"Can't create {folder_path}")
+            print(f"ERROR: Can't create {folder_path}")
             raise
 
     # We're only saving a subset of fields
@@ -147,7 +150,7 @@ def save_asset_original(server_url, catalog_id, session, asset, folder_path):
         os.makedirs(folder_path)
     except OSError:
         if not os.path.isdir(folder_path):
-            print(f"Can't create {folder_path}")
+            print(f"ERROR: Can't create {folder_path}")
             raise
 
     original_asset_id = asset['id']
@@ -173,7 +176,7 @@ def save_asset_preview(server_url, catalog_id, session, asset, folder_path):
         os.makedirs(folder_path)
     except OSError:
         if not os.path.isdir(folder_path):
-            print(f"Can't create {folder_path}")
+            print(f"ERROR: Can't create {folder_path}")
             raise
     
     preview_asset_id = asset['id']
