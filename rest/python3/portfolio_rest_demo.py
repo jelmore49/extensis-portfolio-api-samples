@@ -126,13 +126,35 @@ def get_catalogs(server_url, session):
         return []
 
 
+def get_public_key(server_url):
+    """Returns a dict with the Portfolio server's public key."""
+    request_url = f"{server_url}/api/v1/auth/public-key"
+    
+    try:
+        request = http.request("GET", request_url, headers=REQUEST_HEADERS)
+        response_body = request.data.decode('UTF-8')
+        # print(f"get_public_key(): server public key is {json.loads(response_body)}")
+        return json.loads(response_body)
+        
+    except urllib3.exceptions.RequestError:
+        print(f"ERROR: logout() failed to connect to {hash_request_url}\n")
+        return
+    
 def login(server_url, username, password):
 
-    # TODO: We need to hash the password, this is broken right now
-    password_hash = password
+    server_public_key = get_public_key(server_url)
+    print(f"login(): server_public_key is {server_public_key}")
+
+    if not server_public_key:
+        print("ERROR: No public key found.")
+        return ""
+    else:
+        b64_password = password.encode('UTF-8')
+        print(f"login(): b64_password is {b64_password}")
+        # TODO: We need to hash the password, this is broken right now
+        password_hash = b64_password.decode('UTF-8')
 
     request_url = f"{server_url}/api/v1/auth/login"
-    request_body = "{}"  # This is an empty object so there's no reason to use json.dumps()
     request_body = {'userName': username,
                     'encryptedPassword': password_hash}
 
@@ -142,14 +164,12 @@ def login(server_url, username, password):
         response = json.loads(response_body)
         
     except urllib3.exceptions.RequestError:
-        print(f"ERROR: logout failed to connect to {request_url}\n")
+        print(f"ERROR: login() failed to connect to {request_url}\n")
         return ""
     else:
         if "session" in response:
-            # If 'session' exists, return that
             return response['session']
         elif "faultCode" in response:
-            # If 'faultCode' exists, return that
             print(f"ERROR: could not log in. Fault code {response['faultCode']}, message is {response['message']}")
             return ""
         else:
@@ -168,7 +188,7 @@ def logout(server_url, session):
         return True
 
     request_url = f"{server_url}/api/v1/auth/logout?session={session}"
-    request_body = "{}"  # This is an empty object so there's no reason to use json.dumps()
+    request_body = "{}"  # This is an empty dict so there's no reason to use json.dumps()
 
     try:
         request = http.request("POST", request_url, body=request_body, headers=REQUEST_HEADERS)
