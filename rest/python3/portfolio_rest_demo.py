@@ -54,7 +54,7 @@ def get_asset(server_url, catalog_id, session, record_id):
 
 
 def get_asset_id(server_url, catalog_id, session, asset_index):
-    """Returns an the record ID of an Asset object.
+    """Returns the record ID of an Asset.
     Returns 0 if we can't connect to the server.
     Record IDs (RIDs) aren't entirely sequential; as records are deleted, the RIDs disappear.
     To avoid requesting a nonexistent record we use Portfolio's paging capabilities:
@@ -111,8 +111,8 @@ def get_catalog_asset_count(server_url, catalog_id, session):
 
 
 def get_catalogs(server_url, session):
-    """Returns an array of available catalogs.
-    Returns an empty array if we can't connect to the server.
+    """Returns a list of available catalogs.
+    Returns an empty list if we can't connect to the server.
     """
     request_url = f"{server_url}/api/v1/catalog?session={session}"
 
