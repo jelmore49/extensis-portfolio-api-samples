@@ -136,7 +136,6 @@ def get_public_key(server_url):
     try:
         request = http.request("GET", request_url, headers=REQUEST_HEADERS)
         response_body = request.data.decode('UTF-8')
-        # print(f"get_public_key(): server public key is {json.loads(response_body)}")
         return json.loads(response_body)
         
     except urllib3.exceptions.RequestError:
@@ -146,14 +145,12 @@ def get_public_key(server_url):
 def login(server_url, username, password):
 
     server_public_key = get_public_key(server_url)
-    print(f"login(): server_public_key is {server_public_key}")
 
     if not server_public_key:
         print("ERROR: No public key found.")
         return ""
     else:
         b64_password = password.encode('UTF-8')
-        print(f"login(): b64_password is {b64_password}")
         # TODO: We need to hash the password, this is broken right now
         password_hash = b64_password.decode('UTF-8')
 
