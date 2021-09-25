@@ -29,6 +29,7 @@ METADATA_FOLDER = "Metadata"  # Folder to save downloaded metadata on disk
 # Start our PoolManager
 http = urllib3.PoolManager()
 
+
 # Functions
 
 def get_asset(server_url, catalog_id, session, record_id):
@@ -129,7 +130,7 @@ def get_catalogs(server_url, session):
 def get_public_key(server_url):
     """Returns a dict with the Portfolio server's public key."""
     request_url = f"{server_url}/api/v1/auth/public-key"
-    
+
     try:
         request = http.request("GET", request_url, headers=REQUEST_HEADERS)
         response_body = request.data.decode('UTF-8')
@@ -162,7 +163,7 @@ def login(server_url, username, password):
         request = http.request("POST", request_url, body=json.dumps(request_body), headers=REQUEST_HEADERS)
         response_body = request.data.decode('UTF-8')
         response = json.loads(response_body)
-        
+
     except urllib3.exceptions.RequestError:
         print(f"ERROR: login() failed to connect to {request_url}\n")
         return ""
@@ -294,7 +295,7 @@ else:
 if not USE_API_TOKEN:
     print(f"Logging in to {demo_url} with username {LOGIN_USERNAME}...")
     session_id = login(server_url=demo_url, username=LOGIN_USERNAME, password=LOGIN_PASSWORD)
-    if not session_id: # We got an empty string back for some reason
+    if not session_id:  # We got an empty string back for some reason
         print("ERROR: We didn't get a valid session from login(), exiting.")
         exit()
 else:
