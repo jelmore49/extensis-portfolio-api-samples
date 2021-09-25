@@ -139,7 +139,7 @@ def get_public_key(server_url):
         return json.loads(response_body)
         
     except urllib3.exceptions.RequestError:
-        print(f"ERROR: logout() failed to connect to {hash_request_url}\n")
+        print(f"ERROR: logout() failed to connect to {request_url}\n")
         return
     
 def login(server_url, username, password):
