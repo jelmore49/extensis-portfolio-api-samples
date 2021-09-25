@@ -136,14 +136,17 @@ def get_public_key(server_url):
     try:
         request = http.request("GET", request_url, headers=REQUEST_HEADERS)
         response_body = request.data.decode('UTF-8')
-        return json.loads(response_body)
-        
+        response = json.loads(response_body)
+        modulus = int(response['modulusBase16'], base=16)
+        exponent = int(response['exponent'])
+        return RSA.construct((modulus, exponent))
+
     except urllib3.exceptions.RequestError:
         print(f"ERROR: logout() failed to connect to {request_url}\n")
         return
-    
-def login(server_url, username, password):
 
+
+def login(server_url, username, password):
     server_public_key = get_public_key(server_url)
 
     if not server_public_key:
@@ -151,14 +154,15 @@ def login(server_url, username, password):
         return ""
     else:
         b64_password = password.encode('UTF-8')
-        # TODO: We need to hash the password, this is broken right now
-        password_hash = b64_password.decode('UTF-8')
+        encryptor = PKCS1_OAEP.new(server_public_key)
+        password_hash = encryptor.encrypt(b64_password)
 
     request_url = f"{server_url}/api/v1/auth/login"
     request_body = {'userName': username,
                     'encryptedPassword': password_hash}
 
     try:
+        # FIXME: Why is this broken?
         request = http.request("POST", request_url, body=json.dumps(request_body), headers=REQUEST_HEADERS)
         response_body = request.data.decode('UTF-8')
         response = json.loads(response_body)
