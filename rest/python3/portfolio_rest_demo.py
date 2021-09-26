@@ -1,5 +1,6 @@
 # Imports
 
+from base64 import b64encode
 from Crypto.Cipher import PKCS1_OAEP
 from Crypto.PublicKey import RSA
 import json
@@ -92,11 +93,12 @@ def get_catalog_asset_count(server_url, catalog_id, session):
 
     try:
         request = http.request("POST", request_url, body=json.dumps(request_body), headers=REQUEST_HEADERS)
-        response = json.loads(request.data.decode('UTF-8'))
-        return response['totalNumberOfAssets']
     except urllib3.exceptions.RequestError:
         print(f"ERROR: get_catalog_asset_count() failed to connect to {request_url}\n")
         return 0
+
+    response = json.loads(request.data.decode('UTF-8'))
+    return response['totalNumberOfAssets']
 
 
 def get_catalogs(server_url, session):
@@ -107,57 +109,40 @@ def get_catalogs(server_url, session):
 
     try:
         request = http.request("GET", request_url)
-        return json.loads(request.data.decode('UTF-8'))
     except urllib3.exceptions.RequestError:
         print(f"ERROR: get_catalogs() failed to connect to {request_url}\n")
         return []
 
-
-def get_public_key(server_url):
-    """Returns an RSAKey of the Portfolio server's public key."""
-    request_url = f"{server_url}/api/v1/auth/public-key"
-
-    try:
-        request = http.request("GET", request_url, headers=REQUEST_HEADERS)
-        response = json.loads(request.data.decode('UTF-8'))
-        modulus = int(response['modulusBase16'], base=16)
-        exponent = int(response['exponent'])
-        return RSA.construct((modulus, exponent))
-    except urllib3.exceptions.RequestError:
-        print(f"ERROR: logout() failed to connect to {request_url}\n")
-        return False
+    return json.loads(request.data.decode('UTF-8'))
 
 
-def login(server_url, username, password):
+def get_login_session(server_url, username, password):
     # Get the public key from the server
     server_public_key = get_public_key(server_url)
-    # print(f"login(): server_public_key is {server_public_key}")
 
     # If it's False, we error out.
     if not server_public_key:
         print("ERROR: No public key found.")
         return ""
 
-    b64_password = password.encode('UTF-8')
+    # We create an encryptor with the server public key
     encryptor = PKCS1_OAEP.new(server_public_key)
-    password_hash = encryptor.encrypt(b64_password)
+    # The encrypt() function requires a bytes-like object so we encode our password
+    utf8_password = password.encode()
+    # Encrypt the password
+    enc_password = encryptor.encrypt(utf8_password)
+    # Encode the result as Base64
+    bpassword = b64encode(enc_password)
+    # Turn the base64-encoded password into a string
+    b64_password = bpassword.decode()
 
     request_url = f"{server_url}/api/v1/auth/login"
     request_body = {'userName': username,
-                    'encryptedPassword': password_hash.decode('UTF-8')}
+                    'encryptedPassword': b64_password}
 
+    # FIXME: Why is this coming back with an invalid credentials error?
     try:
-        # FIXME: Why does this break?
         request = http.request("POST", request_url, body=json.dumps(request_body), headers=REQUEST_HEADERS)
-        response = json.loads(request.data.decode('UTF-8'))
-        if "session" in response:
-            return response['session']
-        elif "faultCode" in response:
-            print(f"ERROR: could not log in. Fault code {response['faultCode']}, message is {response['message']}")
-            return ""
-        else:
-            print(f"ERROR: could not log in, unknown error.")
-            return ""
     except urllib3.exceptions.RequestError as error:
         print(f"login: error is {error}")
         print(f"ERROR: login() failed to connect to {request_url}\n")
@@ -165,6 +150,32 @@ def login(server_url, username, password):
     except TypeError as error:
         print(f"login: error is {error}")
         return ""
+
+    response = json.loads(request.data.decode('UTF-8'))
+    if "session" in response:
+        return response['session']
+    elif "faultCode" in response:
+        print(f"ERROR: could not log in. Fault code {response['faultCode']}, message is {response['message']}")
+        return ""
+    else:
+        print(f"ERROR: could not log in, unknown error.")
+        return ""
+
+
+def get_public_key(server_url):
+    """Returns an RsaKey of the Portfolio server's public key."""
+    request_url = f"{server_url}/api/v1/auth/public-key"
+
+    try:
+        request = http.request("GET", request_url, headers=REQUEST_HEADERS)
+    except urllib3.exceptions.RequestError:
+        print(f"ERROR: logout() failed to connect to {request_url}\n")
+        return False
+
+    response = json.loads(request.data.decode('UTF-8'))
+    modulus = int(response['modulusBase16'], base=16)
+    exponent = int(response['exponent'])
+    return RSA.construct((modulus, exponent))
 
 
 def logout(server_url, session):
@@ -182,14 +193,15 @@ def logout(server_url, session):
 
     try:
         request = http.request("POST", request_url, body=request_body, headers=REQUEST_HEADERS)
-        response_body = request.data.decode('UTF-8')
-        if response_body == "":
-            return True
-        else:
-            print(f"Logout response is {response_body}")
-            return False
     except urllib3.exceptions.RequestError:
         print(f"ERROR: logout() failed to connect to {request_url}\n")
+        return False
+
+    response_body = request.data.decode('UTF-8')
+    if response_body == "":
+        return True
+    else:
+        print(f"Logout response is {response_body}")
         return False
 
 
@@ -235,12 +247,12 @@ def save_asset_original(server_url, catalog_id, session, asset, folder_path):
 
     try:
         request = http.request("GET", request_url)
-        response = request.data
-        with open(os.path.join(folder_path, filename), 'wb') as original:
-            original.write(response)
-
     except urllib3.exceptions.RequestError:
         print(f"ERROR: save_asset_original() failed to connect to {request_url}\n")
+
+    response = request.data
+    with open(os.path.join(folder_path, filename), 'wb') as original:
+        original.write(response)
 
 
 def save_asset_preview(server_url, catalog_id, session, asset, folder_path):
@@ -260,11 +272,12 @@ def save_asset_preview(server_url, catalog_id, session, asset, folder_path):
 
     try:
         request = http.request("GET", request_url)
-        response = request.data
-        with open(os.path.join(folder_path, filename), 'wb') as preview:
-            preview.write(response)
     except urllib3.exceptions.RequestError:
         print(f"ERROR: save_asset_preview() failed to connect to {request_url}\n")
+
+    response = request.data
+    with open(os.path.join(folder_path, filename), 'wb') as preview:
+        preview.write(response)
 
 
 #
@@ -278,7 +291,7 @@ else:
 
 if not USE_API_TOKEN:
     print(f"Logging in to {demo_url} with username {LOGIN_USERNAME}...")
-    session_id = login(server_url=demo_url, username=LOGIN_USERNAME, password=LOGIN_PASSWORD)
+    session_id = get_login_session(server_url=demo_url, username=LOGIN_USERNAME, password=LOGIN_PASSWORD)
     if not session_id:  # We got an empty string back for some reason
         print("ERROR: We didn't get a valid session from login(), exiting.")
         exit()
