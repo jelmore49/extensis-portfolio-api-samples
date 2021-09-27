@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+	<meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="images/favicon.ico">
+
+    <title>REST Intro</title> 
+
+	<!-- Bootstrap core CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+
+	<!-- Bootstrap Theme -->
+    <link href="css/bootstrap-theme.min.css" rel="stylesheet">
+
+    <!-- JQuery -->
+  	<script src="js/jquery-2.1.4.min.js"></script>
+
+    <!-- Bootstrap core JS -->
+	<script src="js/bootstrap.min.js"></script>
+
+    <!-- JavaScript RSA Encryption -->
+	<script src="js/jsbn.js"></script>
+	<script src="js/prng4.js"></script>
+	<script src="js/rng.js"></script>
+	<script src="js/rsa.js"></script>
+	<script src="js/base64.js"></script>
+  </head>
+
+<body style="padding-top: 70px;">
+
+
+
+<nav class="navbar navbar-default navbar-fixed-top">
+
+  <div class="container">
+    <!-- Brand and toggle get grouped for better mobile display -->
+
+    <div class="navbar-header">    
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="#">REST Intro</a>
+    </div>
+
+  <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+
+	<form class="navbar-form navbar-left" onSubmit="get_public();return false;">
+
+	  <div class="form-group">
+		<label class="sr-only">Portfolio Server</label>
+		<input type="url" class="form-control" id="PORTFOLIO_SERVER" placeholder="http://localhost:8090" data-toggle="tooltip" data-placement="bottom" data-original-title="" required>
+	  </div>
+
+	  <div class="form-group">
+		<label class="sr-only">Username</label>
+		<input type="username" class="form-control" id="USERNAME" placeholder="Username" required>
+	  </div>
+ 
+	  <div class="form-group">
+		<label class="sr-only">Password</label>
+		<input type="password" class="form-control" id="PASSWORD" placeholder="Password" data-toggle="tooltip" data-placement="bottom" data-original-title="" required autofocus>
+	  </div>
+		
+		<div class="checkbox" id="remember" >
+          <label>
+            <input type="checkbox" value="remember" id="rememberCheck"> Remember
+          </label>
+        </div>
+        
+	  <button type="submit" class="btn btn-primary" id="signin">Sign in</button>
+
+
+	  <div class="form-group" id="catalogSelector" style="display: none;">
+		<label>Catalog</label>
+		<select class="form-control" id="catalogs"></select>
+	  </div>
+
+	  <div class="form-group">
+		<label class="sr-only"></label>
+		<input type="text" class="form-control" id="KEYWORDS" placeholder="Keywords..." data-toggle="tooltip" data-placement="bottom" data-original-title="Enter multiple keywords separated by commas..." style="display: none;">
+	  </div>
+
+
+	</form>
+
+	<ul class="nav navbar-nav navbar-right">
+
+		<li>
+
+			<label class="btn btn-info navbar-btn" id="fieldDefinitions" style="display: none;" onclick="fieldDefinitions(currentSessionID);" data-toggle="tooltip" data-placement="bottom" data-original-title="Retrieve the Field Definitions">
+			<span class="glyphicon glyphicon-tree-conifer"></span>
+			</label>
+
+			<label class="btn btn-info navbar-btn" id="watchFolders" style="display: none;" onclick="watchFolders(currentSessionID);" data-toggle="tooltip" data-placement="bottom" data-original-title="Retrieve the Top-Level Watch Folders">
+			<span class="glyphicon glyphicon-folder-open"></span>
+			</label>
+
+			<label class="btn btn-success navbar-btn" id="uploadPortfolio" style="display: none;" data-toggle="tooltip" data-placement="bottom" data-original-title="Upload to Portfolio">
+			<input id="inputFile" type="file" onchange="uploadPortfolio(currentSessionID);" style="display: none;">
+			<span class="glyphicon glyphicon-upload"></span>
+			</label>
+
+
+		</li>
+	
+		<li>
+			<p class="navbar-text" id="inas" style="display: none;"></p>
+		</li>
+
+		<li>
+			<button type="button" class="btn btn-danger navbar-btn" id="signout" style="display: none;" onclick="logout(currentSessionID);">Sign Out</button>
+		</li>
+
+	</ul>
+
+		</div><!-- /.navbar-collapse -->
+
+	</div><!-- /.container-fluid -->
+
+</nav> <!-- /.navbar -->
+
+<div id="filePreview">
+</div>
+
+
+
+<div class="form-horizontal">
+
+	<div class="form-group" id="fieldID" style="display: none;">
+	  <label for="fieldID" class="col-sm-2 control-label">Field ID : "Keywords"</label>
+		<div class="col-sm-10">
+			<input type="text" class="form-control" id="fieldID" readonly>
+		</div>
+	</div>
+
+	<div class="form-group" id="watchFolderPath" style="display: none;">
+	  <label for="watchFolderPath" class="col-sm-2 control-label">Watch Folder Path</label>
+		<div class="col-sm-10">
+			<input type="url" class="form-control" id="watchFolderPath" readonly>
+		</div>
+	</div>
+	
+</div>
+
+
+
+<div class="form-group" id="queryOutput" style="display: none;">
+  <label for="queryOutput"></label>
+  <textarea class="form-control" rows="20" id="queryOutput" placeholder="" readonly></textarea>
+  <button type="button" class="btn btn-default btn-sm" id="queryOutputZapper" style="display: none;" data-toggle="tooltip" data-placement="bottom" data-original-title="Erase Search Query Output" onclick="$('textarea#queryOutput').val('');"><span class="glyphicon glyphicon-erase"></span></button>
+</div>
+
+    
+<script language="JavaScript">
+
+
+$(document).ready(function(){
+
+// --- Initialize Bootstrap ToolTips
+    $(".dropdown-toggle").dropdown();
+    $('[data-toggle="tooltip"]').tooltip();
+
+// --- Show version
+console.log('[ --- Upload : Version = "'+VERSION+'" --- ]');
+
+// --- Populate	"Portfolio Server" + "Username" 		
+	if (localStorage.checkBoxValidation === 'remember') {
+    
+		$('#rememberCheck').prop('checked', true);
+		$('#USERNAME').val(localStorage.USERNAME);
+		$('#PORTFOLIO_SERVER').val(localStorage.PORTFOLIO_SERVER);
+	
+	}
+                    
+});
+
+
+
+
+
+
+// --- "On Submit" >> save "Portfolio Server" + "Username" to HTML5 Web Storage
+$('#signin').click('submit', function() {
+
+	console.log('[ --- FUNCTION : Remember --- ]');
+
+        if ($('#rememberCheck').is(':checked')) {
+
+        console.log('[ --- Remember : Checkbox is Checked ! --- ]');
+        
+			localStorage.USERNAME = $('#USERNAME').val();
+//			localStorage.PASSWORD = $('#PASSWORD').val();
+			localStorage.PORTFOLIO_SERVER = $('#PORTFOLIO_SERVER').val();
+            localStorage.checkBoxValidation = $('#rememberCheck').val();
+
+			console.log('[ --- Remember : Username = "'+localStorage.USERNAME+'" --- ]');
+			console.log('[ --- Remember : Portfolio Server "'+localStorage.PORTFOLIO_SERVER+'" --- ]');            
+			console.log('[ --- Remember : Checkbox = "'+localStorage.checkBoxValidation+'" --- ]');
+            
+        } else {
+        
+			localStorage.USERNAME = '';
+//			localStorage.PASSWORD = '';
+			localStorage.PORTFOLIO_SERVER = '';
+            localStorage.checkBoxValidation = '';
+        
+        }
+
+});
+
+
+
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+
+var VERSION = "17november2017";
+
+
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+
+
+function get_public(publicKey) {
+
+PORTFOLIO_SERVER = document.getElementById("PORTFOLIO_SERVER").value;
+
+$.ajax({
+type: 'GET',
+url: PORTFOLIO_SERVER + "/api/v1/auth/public-key",
+
+success: function (publicKey){
+
+  console.log('[ --- FUNCTION : Get Public Key --- ]');
+  console.log(publicKey.modulusBase16);
+  console.log(publicKey.exponent);
+  console.log((+publicKey.exponent).toString(16));
+  modulus = publicKey.modulusBase16;
+  exponent = (+publicKey.exponent).toString(16);
+
+	},
+
+error: function (){
+
+	console.log('[ --- ERROR! : Get Public Key --- ]');
+
+	$('#PORTFOLIO_SERVER').attr('title', 'ERROR - Unable to connect !').tooltip('fixTitle').tooltip('show');
+
+	},
+
+complete: function (){
+
+do_encrypt(modulus, exponent);
+
+		}
+
+	});
+}
+
+
+
+function do_encrypt(modulus, exponent) {
+  var rsa = new RSAKey();
+  rsa.setPublic(modulus, exponent);
+  var res = rsa.encrypt(document.getElementById("PASSWORD").value);
+  if(res) {
+  cipherb64 = linebrk(hex2b64(res), 384);
+  console.log('[ --- FUNCTION : Encrypt Password --- ]');
+  console.log(cipherb64);
+
+  login(cipherb64);
+
+	}
+}
+
+
+
+function login(cipherb64) {
+
+$.ajax({
+headers: { 
+        'Accept': 'application/json, text/plain, */*', 
+		},
+type: 'POST',
+url: PORTFOLIO_SERVER + '/api/v1/auth/login',
+data: '{userName:"'+document.getElementById("USERNAME").value+'",encryptedPassword:"'+cipherb64+'"}',
+contentType: 'application/json;charset=UTF-8',
+dataType: 'json',
+success: function (sessionID){
+	
+	console.log('[ --- FUNCTION : Login --- ]');
+ 	console.log(sessionID.session);
+	currentSessionID = sessionID.session;
+	getCatalogs(currentSessionID);
+	
+	$("#inas").html("Signed in as <strong>"+document.getElementById("USERNAME").value+"</strong>");
+
+	$("#signin").hide();
+	$("#USERNAME").hide();
+	$("#PASSWORD").hide();
+	$("#PORTFOLIO_SERVER").hide();
+	$("#remember").hide();
+	$("#catalogSelector").show();
+	$("#KEYWORDS").show();
+	$("#fieldID").show();	
+	$("#watchFolderPath").show();
+	$("#queryOutput").show();
+	$("#queryOutputZapper").show();
+	$("#findAssets").show();
+	$("#fieldDefinitions").show();
+	$("#watchFolders").show();
+	$("#uploadPortfolio").show();
+
+	$("#inas").show();
+	$("#signout").show();
+	
+ 		},
+
+error: function (){
+
+	console.log('[ --- ERROR! : Login --- ]');
+
+	$('#PASSWORD').attr('title', 'Authentication Error !').tooltip('fixTitle').tooltip('show');
+
+		},
+
+complete: function (){
+
+		},
+ 		
+	});
+}
+
+
+
+function getCatalogs(currentSessionID) {
+
+$.ajax({
+type: 'GET',
+url: PORTFOLIO_SERVER + '/api/v1/catalog?session=' + currentSessionID,
+dataType: 'json',
+success: function (getCatalogsOutput){
+
+		console.log('[ --- FUNCTION : Get Catalogs --- ]');
+
+		// Sort Catalogs Alphabetically -- https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Array/sort		
+		getCatalogsOutput.sort(function (a, b) {
+			var nameA = a.name.toUpperCase();
+			var nameB = b.name.toUpperCase();
+			if (nameA < nameB) {
+				return -1;
+			}
+			if (nameA > nameB) {
+				return 1;
+			}
+			return 0;
+		});
+		
+		console.log(JSON.stringify(getCatalogsOutput));
+		
+		var catalog = "";
+
+		$.each(getCatalogsOutput, function(key, value) {
+
+				console.log(value.name);
+				console.log(value.id);
+
+				catalog += "<option value='" + value.id + "'>" + value.name + "</option>";
+		
+		})
+		$("#catalogs").html(catalog);
+
+ 	},
+ 
+ 
+error: function (){
+
+console.log('[ --- ERROR! : Get Catalogs --- ]');
+
+	},
+ 		
+
+complete: function (){
+
+
+		}
+ 		
+	});
+}
+
+
+
+
+function watchFolders(currentSessionID) {
+
+CatalogID = $("#catalogSelector option:selected").val();
+
+$.ajax({
+type: 'GET',
+url: PORTFOLIO_SERVER + '/api/v1/catalog/' + CatalogID + '/watchfolder/?session=' + currentSessionID,
+dataType: 'json',
+success: function (watchFoldersOutput){
+
+		console.log('[ --- FUNCTION : Watch Folders --- ]');
+
+		
+		console.log(JSON.stringify(watchFoldersOutput));
+
+	$('textarea#queryOutput').val($('textarea#queryOutput').val()+'[ . . . ] - Retrieving top-level Watch Folders for Catalog ID "' + CatalogID + '" - [ . . . ]\n');
+	$('textarea#queryOutput').val($('textarea#queryOutput').val() + JSON.stringify(watchFoldersOutput, null , 4)+ '\n\n\n');
+	$('textarea#queryOutput').scrollTop($('textarea#queryOutput')[0].scrollHeight);
+		
+		
+	$('input#watchFolderPath').val(watchFoldersOutput[0]["path"]);
+
+
+ 	},
+ 
+ 
+error: function (){
+
+console.log('[ --- ERROR! : Watch Folders --- ]');
+
+	},
+ 		
+
+complete: function (){
+
+
+
+
+		}
+ 		
+	});
+}
+
+
+
+
+function fieldDefinitions(currentSessionID) {
+
+CatalogID = $("#catalogSelector option:selected").val();
+
+$.ajax({
+type: 'GET',
+url: PORTFOLIO_SERVER + '/api/v1/catalog/' + CatalogID + '/field_definition?session=' + currentSessionID,
+dataType: 'json',
+success: function (fieldDefinitionsOutput){
+
+		console.log('[ --- FUNCTION : Field Definitions --- ]');
+
+		
+		console.log(JSON.stringify(fieldDefinitionsOutput));
+
+	$('textarea#queryOutput').val($('textarea#queryOutput').val()+'[ . . . ] - Retrieving Field Definitions for Catalog ID "' + CatalogID + '" - [ . . . ]\n');
+	$('textarea#queryOutput').val($('textarea#queryOutput').val() + JSON.stringify(fieldDefinitionsOutput, null , 4)+ '\n\n\n');
+	$('textarea#queryOutput').scrollTop($('textarea#queryOutput')[0].scrollHeight);
+		
+	var keywordsArray = $.grep(fieldDefinitionsOutput, function(e){ return e.systemName == 'Keywords'; });
+
+	$('input#fieldID').val(keywordsArray[0]["id"]);
+
+ 	},
+ 
+ 
+error: function (){
+
+console.log('[ --- ERROR! : Field Definitions --- ]');
+
+	},
+ 		
+
+complete: function (){
+
+
+
+
+		}
+ 		
+	});
+}
+
+
+
+
+
+function uploadPortfolio(currentSessionID) {
+
+var t0 = performance.now();
+
+CatalogID = $("#catalogSelector option:selected").val();
+CatalogName = $("#catalogSelector option:selected").text();
+DestinationFolder = $("input#watchFolderPath").val();
+KeywordsID = $("input#fieldID").val();
+
+console.log('[ DestinationFolder ] = "' + DestinationFolder + '" ; [ KeywordsID ] = "' + KeywordsID + '"');
+
+var filesSelected = document.getElementById("inputFile").files;
+
+itemKeywords = $("#KEYWORDS").val().split(',');
+jsonKeywords = JSON.stringify(itemKeywords);
+console.log("[ JSON Keywords ] = "+jsonKeywords);
+
+console.log("[ File Name ] = " + filesSelected[0].name);
+console.log("[ File Size ] = " + filesSelected[0].size);
+console.log("[ File Type ] = " + filesSelected[0].type);
+
+
+var uploadData = new FormData();
+
+uploadData.append('sessionId', currentSessionID);
+uploadData.append('catalogId', CatalogID);
+uploadData.append('filename', filesSelected[0].name);
+uploadData.append('destinationFolder', DestinationFolder);
+uploadData.append('action', 'upload');
+uploadData.append('ingestFields', '[{"fieldId":"' + KeywordsID + '","values":' + jsonKeywords + '}]');
+
+uploadData.append('Filedata', filesSelected[0]);
+
+
+$.ajax({
+data: uploadData,
+type: 'POST',
+url: PORTFOLIO_SERVER + '/FileTransfer/upload',
+crossDomain: true,
+contentType: false,
+processData: false,
+
+success: function (uploadPortfolioOutput){
+
+		console.log('[ --- FUNCTION : Upload to Portfolio --- ]');
+ 
+// 		$('textarea#queryOutput').val($('textarea#queryOutput').val()+'[ Uploading ] : "' + filesSelected[0].name + '" to "' + watchFolder + uploadFolder + '". . .\n');
+
+		console.log(JSON.stringify(uploadPortfolioOutput));
+
+ 		$('textarea#queryOutput').val($('textarea#queryOutput').val()+'[ Completed ] : "' + filesSelected[0].name + '" = [ Item ID ] : ' + uploadPortfolioOutput );
+				
+		$('textarea#queryOutput').scrollTop($('textarea#queryOutput')[0].scrollHeight);
+
+ 
+ }, //success
+
+
+error: function (uploadPortfolioError){
+
+	var t1 = performance.now();
+	
+	console.log('[ --- ERROR! : Upload to Portfolio --- ]');
+
+	$('textarea#queryOutput').val($('textarea#queryOutput').val()+'[ ! ! ! ] - [ '+ filesSelected[0].name +' ] - Uploaded in [ '+Math.round( (t1 - t0) / 1000 )+' ] seconds...\n');
+	$('textarea#queryOutput').scrollTop($('textarea#queryOutput')[0].scrollHeight);
+	
+	console.log(JSON.stringify(uploadPortfolioError));
+
+	var data = uploadPortfolioError.responseText;
+    console.log(data);	 
+
+//	$('textarea#queryOutput').val($('textarea#queryOutput').val()+'[ Error ! ] = "' + JSON.stringify(uploadPortfolioError) + '". . .\n');
+	
+//	$('textarea#queryOutput').scrollTop($('textarea#queryOutput')[0].scrollHeight);
+
+},
+
+	
+complete: function (){
+
+} //complete
+
+
+ 		
+		}); //ajax
+
+
+
+
+} //uploadPortfolio
+
+
+
+function logout(currentSessionID) {
+
+$.ajax({
+headers: { 
+        'Accept': 'application/json, text/plain, */*',        
+        'Content-Type': 'application/json;charset=UTF-8'
+		},
+type: 'POST',
+url: PORTFOLIO_SERVER + '/api/v1/auth/logout?session=' + currentSessionID,
+data: '{}',
+dataType: 'json',
+success: function (logoutMessage){
+
+		console.log('[ --- FUNCTION : Logout --- ]');
+		console.log('Session Logout... '+logoutMessage);
+	$("#signin").show();
+	$("#inas").hide();
+	$("#signout").hide();
+	$("#USERNAME").show();
+	$("#PASSWORD").show();
+	$("#PORTFOLIO_SERVER").show();
+	$("#remember").show();
+	$("#catalogSelector").hide();
+	$("#KEYWORDS").hide();
+	$("#fieldID").hide();	
+	$("#watchFolderPath").hide();
+	$("#queryOutput").hide();
+	$("#queryOutputZapper").hide();
+	$("#findAssets").hide();
+	$("#fieldDefinitions").hide();
+	$("#watchFolders").hide();
+	$("#uploadPortfolio").hide();
+	location.reload(true);
+
+ 		}
+	});
+}
+
+
+
+		</script>
+    
+	</body>
+
+</html>
