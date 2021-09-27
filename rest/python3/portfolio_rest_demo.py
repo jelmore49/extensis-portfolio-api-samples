@@ -135,23 +135,21 @@ def get_login_session(server_url, username, password):
     bpassword = b64encode(enc_password)
     # Turn the base64-encoded password into a string
     b64_password = bpassword.decode()
-
+    # Build our login URL
     request_url = f"{server_url}/api/v1/auth/login"
+    # Set the request body to our username and encrypted password
     request_body = {'userName': username,
                     'encryptedPassword': b64_password}
 
     # FIXME: Why is this coming back with an invalid credentials error?
     try:
         request = http.request("POST", request_url, body=json.dumps(request_body), headers=REQUEST_HEADERS)
-    except urllib3.exceptions.RequestError as error:
-        print(f"login: error is {error}")
+    except urllib3.exceptions.RequestError:
         print(f"ERROR: login() failed to connect to {request_url}\n")
         return ""
-    except TypeError as error:
-        print(f"login: error is {error}")
-        return ""
 
-    response = json.loads(request.data.decode('UTF-8'))
+    response_data = request.data
+    response = json.loads(response_data.decode('UTF-8'))
     if "session" in response:
         return response['session']
     elif "faultCode" in response:
