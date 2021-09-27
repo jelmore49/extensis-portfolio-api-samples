@@ -125,6 +125,7 @@ def get_login_session(server_url, username, password):
         print("ERROR: No public key found.")
         return ""
 
+    # FIXME: I'm incorrectly hashing and/or encrypting this password
     # We create an encryptor with the server public key
     encryptor = PKCS1_OAEP.new(server_public_key)
     # The encrypt() function requires a bytes-like object so we encode our password
@@ -141,7 +142,6 @@ def get_login_session(server_url, username, password):
     request_body = {'userName': username,
                     'encryptedPassword': b64_password}
 
-    # FIXME: Why is this coming back with an invalid credentials error?
     try:
         request = http.request("POST", request_url, body=json.dumps(request_body), headers=REQUEST_HEADERS)
     except urllib3.exceptions.RequestError:
@@ -213,8 +213,8 @@ def save_asset_metadata(asset, folder_path):
             raise
 
     # We're only saving a subset of fields
-    output_fields = ("Cataloged By", "Cataloged", "Created", "Directory Path", "Height", "Keywords",
-                     "Last Modified", "Last Updated", "Updated By", "Width")
+    output_fields = ("Cataloged By", "Cataloged", "Created", "Directory Path", "Keywords",
+                     "Last Modified", "Last Updated", "Updated By")
     asset_fields = asset['attributes']
     filename = f"{asset_fields['Filename'][0]} - Metadata.txt"
 
