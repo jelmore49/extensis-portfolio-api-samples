@@ -182,7 +182,8 @@ def logout(server_url, session):
     This isn't needed for API tokens, as they don't take up a Portfolio user seat, but you should
     do this for username/password logins so the seat is released.
     """
-
+    # Sanity check; if we pass a session ID that starts with TOKEN then it's an API token
+    #  and there's nothing for us to do.
     if session[0:5] == "TOKEN":
         print("We're using an API token so there's no seat to reclaim.")
         return True
@@ -376,7 +377,11 @@ save_asset_preview(server_url=demo_url, session=session_id, catalog_id=demo_cata
                    folder_path=PREVIEWS_FOLDER)
 
 print("\nLogging out of the server...")
-if logout(server_url=demo_url, session=session_id):
-    print("Session logout successful.")
+
+if USE_API_TOKEN:
+    print("We're using an API token so there's no seat to reclaim; skipping logout.")
 else:
-    print("Session logout failed.")
+    if logout(server_url=demo_url, session=session_id):
+        print("Session logout successful.")
+    else:
+        print("Session logout failed for some reason.")
