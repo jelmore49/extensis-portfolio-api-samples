@@ -288,15 +288,15 @@ if USE_HTTPS:
 else:
     demo_url = f"http://{SERVER_ADDRESS}:{SERVER_HTTP_PORT}"
 
-if not USE_API_TOKEN:
+if USE_API_TOKEN:
+    print("We're using an API token to log in.")
+    session_id = API_TOKEN
+else:
     print(f"Logging in to {demo_url} with username {LOGIN_USERNAME}...")
     session_id = get_login_session(server_url=demo_url, username=LOGIN_USERNAME, password=LOGIN_PASSWORD)
     if not session_id:  # We got an empty string back for some reason
         print("ERROR: We didn't get a valid session from login(), exiting.")
         exit()
-else:
-    print("We're using an API token to log in.")
-    session_id = API_TOKEN
 
 print(f"Getting a list of catalogs from {demo_url}...")
 catalogs = get_catalogs(server_url=demo_url, session=session_id)
