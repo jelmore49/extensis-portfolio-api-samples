@@ -1,6 +1,7 @@
 # Imports
 
 from base64 import b64encode
+# We use PKCS1_v1_5 instead of PKCS1_OEAP because the latter adds padding that messes with our authentication
 from Crypto.Cipher import PKCS1_v1_5
 from Crypto.PublicKey import RSA
 import json
@@ -13,7 +14,7 @@ import urllib3
 SERVER_ADDRESS = "playground.extensis.com"
 SERVER_HTTP_PORT = "8090"  # Default port
 SERVER_HTTPS_PORT = "9443"  # Default port
-USE_HTTPS = True
+USE_HTTPS = False
 
 LOGIN_USERNAME = "administrator"
 LOGIN_PASSWORD = "password"
@@ -125,7 +126,6 @@ def get_login_session(server_url, username, password):
         print("ERROR: No public key found.")
         return ""
 
-    # FIXME: I'm incorrectly hashing and/or encrypting this password
     # We create an encryptor with the server public key
     encryptor = PKCS1_v1_5.new(server_public_key)
     # The encrypt() function requires a bytes-like object so we encode our password
