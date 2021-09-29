@@ -1,7 +1,6 @@
 # Imports
 
 from base64 import b64encode
-# We use PKCS1_v1_5 instead of PKCS1_OEAP because the latter adds padding that messes with our authentication
 from Crypto.Cipher import PKCS1_v1_5
 from Crypto.PublicKey import RSA
 import json
@@ -45,7 +44,7 @@ def get_asset(server_url, catalog_id, session, record_id):
     try:
         request = http.request("POST", request_url, body=json.dumps(request_body), headers=REQUEST_HEADERS)
         response = json.loads(request.data.decode('UTF-8'))
-        return response['assets'][0]
+        return response['assets'][0]  # We get a list back so we return the first item
     except urllib3.exceptions.RequestError:
         print(f"ERROR: get_asset() failed to connect to {request_url}\n")
         return {}
@@ -73,6 +72,7 @@ def get_asset_id(server_url, catalog_id, session, asset_index):
             return 0
         else:
             assets = response['assets']
+            # We get a list back so we return the first item
             # The "id" field is a string so we make it an integer
             return int(assets[0]['id'])
     except urllib3.exceptions.RequestError:
@@ -127,6 +127,7 @@ def get_login_session(server_url, username, password):
         return ""
 
     # We create an encryptor with the server public key
+    # We use PKCS1_v1_5 instead of PKCS1_OEAP because the latter adds padding that messes with our authentication
     encryptor = PKCS1_v1_5.new(server_public_key)
     # The encrypt() function requires a bytes-like object so we encode our password
     utf8_password = password.encode()
@@ -171,7 +172,7 @@ def get_public_key(server_url):
         return False
 
     response = json.loads(request.data.decode('UTF-8'))
-    modulus = int(response['modulusBase16'], base=16)
+    modulus = int(response['modulusBase16'], base=16)  # It's a hex string so we need to turn it into a base 10 integer
     exponent = int(response['exponent'])
     return RSA.construct((modulus, exponent))
 
