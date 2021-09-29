@@ -1,7 +1,7 @@
 # Imports
 
 from base64 import b64encode
-from Crypto.Cipher import PKCS1_OAEP
+from Crypto.Cipher import PKCS1_v1_5
 from Crypto.PublicKey import RSA
 import json
 import os
@@ -127,7 +127,7 @@ def get_login_session(server_url, username, password):
 
     # FIXME: I'm incorrectly hashing and/or encrypting this password
     # We create an encryptor with the server public key
-    encryptor = PKCS1_OAEP.new(server_public_key)
+    encryptor = PKCS1_v1_5.new(server_public_key)
     # The encrypt() function requires a bytes-like object so we encode our password
     utf8_password = password.encode()
     # Encrypt the password
