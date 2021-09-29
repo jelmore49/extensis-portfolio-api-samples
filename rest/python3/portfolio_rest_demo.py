@@ -130,13 +130,11 @@ def get_login_session(server_url, username, password):
     # We use PKCS1_v1_5 instead of PKCS1_OEAP because the latter adds padding that messes with our authentication
     encryptor = PKCS1_v1_5.new(server_public_key)
     # The encrypt() function requires a bytes-like object so we encode our password
-    utf8_password = password.encode()
+    password_bytes = password.encode()
     # Encrypt the password
-    enc_password = encryptor.encrypt(utf8_password)
-    # Encode the result as Base64
-    bpassword = b64encode(enc_password)
-    # Turn the base64-encoded password into a string
-    b64_password = bpassword.decode()
+    enc_password = encryptor.encrypt(password_bytes)
+    # Encode the result as Base64 and turn it into a string
+    b64_password = b64encode(enc_password).decode()
     # Build our login URL
     request_url = f"{server_url}/api/v1/auth/login"
     # Set the request body to our username and encrypted password
