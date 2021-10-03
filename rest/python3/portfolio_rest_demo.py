@@ -1,7 +1,6 @@
 # Imports
 
 from base64 import b64encode
-# We use PKCS1_v1_5 instead of PKCS1_OEAP because the latter adds padding that messes with our authentication
 from Crypto.Cipher import PKCS1_v1_5
 from Crypto.PublicKey import RSA
 import json
@@ -16,10 +15,11 @@ SERVER_HTTP_PORT = "8090"  # Default port
 SERVER_HTTPS_PORT = "9443"  # Default port
 USE_HTTPS = False
 
+API_TOKEN = "TOKEN-db3055e8-df7c-41de-955f-3a1544e491d8"
+# These are the default username and password for a new Portfolio installation
 LOGIN_USERNAME = "administrator"
 LOGIN_PASSWORD = "password"
-API_TOKEN = "TOKEN-db3055e8-df7c-41de-955f-3a1544e491d8"
-USE_API_TOKEN = False
+USE_API_TOKEN = True
 
 REQUEST_HEADERS = {'Accept': 'application/json, text/plain, */*',
                    'Content-Type': 'application/json;charset=UTF-8'}
@@ -45,7 +45,7 @@ def get_asset(server_url, catalog_id, session, record_id):
     try:
         request = http.request("POST", request_url, body=json.dumps(request_body), headers=REQUEST_HEADERS)
         response = json.loads(request.data.decode('UTF-8'))
-        return response['assets'][0]
+        return response['assets'][0]  # We get a list back so we return the first item
     except urllib3.exceptions.RequestError:
         print(f"ERROR: get_asset() failed to connect to {request_url}\n")
         return {}
@@ -73,6 +73,7 @@ def get_asset_id(server_url, catalog_id, session, asset_index):
             return 0
         else:
             assets = response['assets']
+            # We get a list back so we return the first item
             # The "id" field is a string so we make it an integer
             return int(assets[0]['id'])
     except urllib3.exceptions.RequestError:
@@ -127,15 +128,14 @@ def get_login_session(server_url, username, password):
         return ""
 
     # We create an encryptor with the server public key
+    # We use PKCS1_v1_5 instead of PKCS1_OEAP because the latter adds padding that messes with our authentication
     encryptor = PKCS1_v1_5.new(server_public_key)
     # The encrypt() function requires a bytes-like object so we encode our password
-    utf8_password = password.encode()
+    password_bytes = password.encode()
     # Encrypt the password
-    enc_password = encryptor.encrypt(utf8_password)
-    # Encode the result as Base64
-    bpassword = b64encode(enc_password)
-    # Turn the base64-encoded password into a string
-    b64_password = bpassword.decode()
+    enc_password = encryptor.encrypt(password_bytes)
+    # Encode the result as Base64 and turn it into a string
+    b64_password = b64encode(enc_password).decode()
     # Build our login URL
     request_url = f"{server_url}/api/v1/auth/login"
     # Set the request body to our username and encrypted password
@@ -171,7 +171,7 @@ def get_public_key(server_url):
         return False
 
     response = json.loads(request.data.decode('UTF-8'))
-    modulus = int(response['modulusBase16'], base=16)
+    modulus = int(response['modulusBase16'], base=16)  # It's a hex string so we need to turn it into a base 10 integer
     exponent = int(response['exponent'])
     return RSA.construct((modulus, exponent))
 
@@ -181,7 +181,8 @@ def logout(server_url, session):
     This isn't needed for API tokens, as they don't take up a Portfolio user seat, but you should
     do this for username/password logins so the seat is released.
     """
-
+    # Sanity check; if we pass a session ID that starts with TOKEN then it's an API token
+    #  and there's nothing for us to do.
     if session[0:5] == "TOKEN":
         print("We're using an API token so there's no seat to reclaim.")
         return True
@@ -287,15 +288,15 @@ if USE_HTTPS:
 else:
     demo_url = f"http://{SERVER_ADDRESS}:{SERVER_HTTP_PORT}"
 
-if not USE_API_TOKEN:
+if USE_API_TOKEN:
+    print("We're using an API token to log in.")
+    session_id = API_TOKEN
+else:
     print(f"Logging in to {demo_url} with username {LOGIN_USERNAME}...")
     session_id = get_login_session(server_url=demo_url, username=LOGIN_USERNAME, password=LOGIN_PASSWORD)
     if not session_id:  # We got an empty string back for some reason
         print("ERROR: We didn't get a valid session from login(), exiting.")
         exit()
-else:
-    print("We're using an API token to log in.")
-    session_id = API_TOKEN
 
 print(f"Getting a list of catalogs from {demo_url}...")
 catalogs = get_catalogs(server_url=demo_url, session=session_id)
@@ -375,7 +376,11 @@ save_asset_preview(server_url=demo_url, session=session_id, catalog_id=demo_cata
                    folder_path=PREVIEWS_FOLDER)
 
 print("\nLogging out of the server...")
-if logout(server_url=demo_url, session=session_id):
-    print("Session logout successful.")
+
+if USE_API_TOKEN:
+    print("We're using an API token so there's no seat to reclaim; skipping logout.")
 else:
-    print("Session logout failed.")
+    if logout(server_url=demo_url, session=session_id):
+        print("Session logout successful.")
+    else:
+        print("Session logout failed for some reason.")
