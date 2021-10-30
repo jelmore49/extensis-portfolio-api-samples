@@ -3,10 +3,10 @@
 from base64 import b64encode
 from Crypto.Cipher import PKCS1_v1_5
 from Crypto.PublicKey import RSA
-import json
+from json import dumps
+from random import choice, randint
 import os
-import random
-import urllib3
+import requests
 
 # Constants
 
@@ -28,9 +28,6 @@ ASSETS_FOLDER = "Originals"  # Folder to save downloaded assets on disk
 PREVIEWS_FOLDER = "Previews"  # Folder to save downloaded previews on disk
 METADATA_FOLDER = "Metadata"  # Folder to save downloaded metadata on disk
 
-# Start our PoolManager
-http = urllib3.PoolManager()
-
 
 # Functions
 
@@ -43,10 +40,11 @@ def get_asset(server_url, catalog_id, session, record_id):
                     'term': {'operator': "assetsById", 'values': [record_id]}}
 
     try:
-        request = http.request("POST", request_url, body=json.dumps(request_body), headers=REQUEST_HEADERS)
-        response = json.loads(request.data.decode('UTF-8'))
+        request = requests.post(request_url, data=dumps(request_body), headers=REQUEST_HEADERS)
+        request.raise_for_status()
+        response = request.json()
         return response['assets'][0]  # We get a list back so we return the first item
-    except urllib3.exceptions.RequestError:
+    except requests.exceptions.ConnectionError:
         print(f"ERROR: get_asset() failed to connect to {request_url}\n")
         return {}
 
@@ -66,8 +64,9 @@ def get_asset_id(server_url, catalog_id, session, asset_index):
                     'sortOptions': {'field': "RID", 'order': "desc"}}
 
     try:
-        request = http.request("POST", request_url, body=json.dumps(request_body), headers=REQUEST_HEADERS)
-        response = json.loads(request.data.decode('UTF-8'))
+        request = requests.post(request_url, data=dumps(request_body), headers=REQUEST_HEADERS)
+        request.raise_for_status()
+        response = request.json()
         if response['totalNumberOfAssets'] == 0:
             print("ERROR: No assets are available.\n")
             return 0
@@ -76,7 +75,7 @@ def get_asset_id(server_url, catalog_id, session, asset_index):
             # We get a list back so we return the first item
             # The "id" field is a string so we make it an integer
             return int(assets[0]['id'])
-    except urllib3.exceptions.RequestError:
+    except requests.exceptions.ConnectionError:
         print(f"ERROR: get_asset_id() failed to connect to {request_url}\n")
         return 0
 
@@ -94,12 +93,13 @@ def get_catalog_asset_count(server_url, catalog_id, session):
                     'sortOptions': {'field': "Cataloged", 'order': "desc"}}
 
     try:
-        request = http.request("POST", request_url, body=json.dumps(request_body), headers=REQUEST_HEADERS)
-    except urllib3.exceptions.RequestError:
+        request = requests.post(request_url, data=dumps(request_body), headers=REQUEST_HEADERS)
+        request.raise_for_status()
+    except requests.exceptions.ConnectionError:
         print(f"ERROR: get_catalog_asset_count() failed to connect to {request_url}\n")
         return 0
 
-    response = json.loads(request.data.decode('UTF-8'))
+    response = request.json()
     return response['totalNumberOfAssets']
 
 
@@ -110,12 +110,13 @@ def get_catalogs(server_url, session):
     request_url = f"{server_url}/api/v1/catalog?session={session}"
 
     try:
-        request = http.request("GET", request_url)
-    except urllib3.exceptions.RequestError:
+        request = requests.get(request_url)
+        request.raise_for_status()
+    except requests.exceptions.ConnectionError:
         print(f"ERROR: get_catalogs() failed to connect to {request_url}\n")
         return []
 
-    return json.loads(request.data.decode('UTF-8'))
+    return request.json()
 
 
 def get_login_session(server_url, username, password):
@@ -143,13 +144,14 @@ def get_login_session(server_url, username, password):
                     'encryptedPassword': b64_password}
 
     try:
-        request = http.request("POST", request_url, body=json.dumps(request_body), headers=REQUEST_HEADERS)
-    except urllib3.exceptions.RequestError:
+        request = requests.post(request_url, data=dumps(request_body), headers=REQUEST_HEADERS)
+        request.raise_for_status()
+    except requests.exceptions.ConnectionError:
         print(f"ERROR: login() failed to connect to {request_url}\n")
         return ""
 
-    response_data = request.data
-    response = json.loads(response_data.decode('UTF-8'))
+    response = request.json()
+
     if "session" in response:
         return response['session']
     elif "faultCode" in response:
@@ -165,12 +167,13 @@ def get_public_key(server_url):
     request_url = f"{server_url}/api/v1/auth/public-key"
 
     try:
-        request = http.request("GET", request_url, headers=REQUEST_HEADERS)
-    except urllib3.exceptions.RequestError:
+        request = requests.get(request_url, headers=REQUEST_HEADERS)
+        request.raise_for_status()
+    except requests.exceptions.ConnectionError:
         print(f"ERROR: logout() failed to connect to {request_url}\n")
         return False
 
-    response = json.loads(request.data.decode('UTF-8'))
+    response = request.json()
     modulus = int(response['modulusBase16'], base=16)  # It's a hex string so we need to turn it into a base 10 integer
     exponent = int(response['exponent'])
     return RSA.construct((modulus, exponent))
@@ -188,14 +191,18 @@ def logout(server_url, session):
         return True
 
     request_url = f"{server_url}/api/v1/auth/logout?session={session}"
-    request_body = "{}"  # This is an empty dict so there's no reason to use json.dumps()
+    request_body = "{}"  # This is an empty dict so there's no reason to use dumps()
 
     try:
-        request = http.request("POST", request_url, body=request_body, headers=REQUEST_HEADERS)
-    except urllib3.exceptions.RequestError:
+        request = requests.post(request_url, data=request_body, headers=REQUEST_HEADERS)
+        request.raise_for_status()
+    except requests.exceptions.ConnectionError:
         print(f"ERROR: logout() failed to connect to {request_url}\n")
         return False
 
+    # FIXME: Need to test this
+    response = request.json()
+    print(f"response is {response}")
     response_body = request.data.decode('UTF-8')
     if response_body == "":
         return True
@@ -245,11 +252,12 @@ def save_asset_original(server_url, catalog_id, session, asset, folder_path):
     filename = asset['attributes']['Filename'][0]
 
     try:
-        request = http.request("GET", request_url)
-    except urllib3.exceptions.RequestError:
+        request = requests.get(request_url)
+        request.raise_for_status()
+    except requests.exceptions.ConnectionError:
         print(f"ERROR: save_asset_original() failed to connect to {request_url}\n")
 
-    response = request.data
+    response = request.content
     with open(os.path.join(folder_path, filename), 'wb') as original:
         original.write(response)
 
@@ -270,11 +278,12 @@ def save_asset_preview(server_url, catalog_id, session, asset, folder_path):
     filename = f"Preview of {asset['attributes']['Filename'][0]}"
 
     try:
-        request = http.request("GET", request_url)
-    except urllib3.exceptions.RequestError:
+        request = requests.get(request_url)
+        request.raise_for_status()
+    except requests.exceptions.ConnectionError:
         print(f"ERROR: save_asset_preview() failed to connect to {request_url}\n")
 
-    response = request.data
+    response = request.content
     with open(os.path.join(folder_path, filename), 'wb') as preview:
         preview.write(response)
 
@@ -309,7 +318,7 @@ catalog_names = [catalog['name'] for catalog in catalogs]
 print("Available catalogs:")
 print(*catalog_names, sep=", ")
 
-demo_catalog = random.choice(catalog_names)
+demo_catalog = choice(catalog_names)
 demo_catalog_id = ""
 print(f"We're going to use '{demo_catalog}'")
 for catalog in catalogs:
@@ -334,7 +343,7 @@ print("(In practice, you wouldn't do this: you'd submit search terms to get a us
       "of assets back. Since we don't know what is in the catalog, we're choosing a random asset.\n"
       "See get_asset_id() for an explanation of how we do this.)")
 
-random_asset_index = random.randint(0, total_assets)
+random_asset_index = randint(0, total_assets)
 print(f"Our random asset index is {random_asset_index}")
 random_asset_id = get_asset_id(server_url=demo_url, session=session_id, catalog_id=demo_catalog_id,
                                asset_index=random_asset_index)
@@ -361,7 +370,7 @@ print("The file's keywords are:")
 print(*test_asset_fields['Keywords'], sep="; ")
 
 # Uncomment to see the whole Asset
-# test_asset_pretty = json.dumps(test_asset, sort_keys=True, indent=2, separators=(',', ': '))
+# test_asset_pretty = dumps(test_asset, sort_keys=True, indent=2, separators=(',', ': '))
 # print(f"The full content of the Asset record is:\n{test_asset_pretty}")
 
 print(f"\nSaving metadata for '{test_asset_filename}' to a text file...")
