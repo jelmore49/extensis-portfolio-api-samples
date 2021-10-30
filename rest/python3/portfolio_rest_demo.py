@@ -200,14 +200,11 @@ def logout(server_url, session):
         print(f"ERROR: logout() failed to connect to {request_url}\n")
         return False
 
-    # FIXME: Need to test this
-    response = request.json()
-    print(f"response is {response}")
-    response_body = request.data.decode('UTF-8')
-    if response_body == "":
+    # Status code 204 indicates a sucessful logout
+    if request.status_code == 204:
         return True
     else:
-        print(f"Logout response is {response_body}")
+        print(f"Logout response is {request.status_code}")
         return False
 
 
