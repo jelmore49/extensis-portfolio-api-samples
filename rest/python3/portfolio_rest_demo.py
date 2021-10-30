@@ -10,12 +10,12 @@ import requests
 
 # Constants
 
-SERVER_ADDRESS = "playground.extensis.com"
+SERVER_ADDRESS = "192.168.1.202"
 SERVER_HTTP_PORT = "8090"  # Default port
 SERVER_HTTPS_PORT = "9443"  # Default port
 USE_HTTPS = False
 
-API_TOKEN = "TOKEN-e554ed0f-5438-4576-bfc4-fe562d972920"  # API token; see Portfolio docs on how to generate
+API_TOKEN = "TOKEN-db3055e8-df7c-41de-955f-3a1544e491d8"
 # These are the default username and password for a new Portfolio installation
 LOGIN_USERNAME = "administrator"
 LOGIN_PASSWORD = "password"
