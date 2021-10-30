@@ -42,11 +42,12 @@ def get_asset(server_url, catalog_id, session, record_id):
     try:
         request = requests.post(request_url, data=dumps(request_body), headers=REQUEST_HEADERS)
         request.raise_for_status()
-        response = request.json()
-        return response['assets'][0]  # We get a list back so we return the first item
     except requests.exceptions.ConnectionError:
         print(f"ERROR: get_asset() failed to connect to {request_url}\n")
         return {}
+    else:
+        response = request.json()
+        return response['assets'][0]  # We get a list back so we return the first item
 
 
 def get_asset_id(server_url, catalog_id, session, asset_index):
@@ -66,6 +67,10 @@ def get_asset_id(server_url, catalog_id, session, asset_index):
     try:
         request = requests.post(request_url, data=dumps(request_body), headers=REQUEST_HEADERS)
         request.raise_for_status()
+    except requests.exceptions.ConnectionError:
+        print(f"ERROR: get_asset_id() failed to connect to {request_url}\n")
+        return 0
+    else:
         response = request.json()
         if response['totalNumberOfAssets'] == 0:
             print("ERROR: No assets are available.\n")
@@ -75,9 +80,6 @@ def get_asset_id(server_url, catalog_id, session, asset_index):
             # We get a list back so we return the first item
             # The "id" field is a string so we make it an integer
             return int(assets[0]['id'])
-    except requests.exceptions.ConnectionError:
-        print(f"ERROR: get_asset_id() failed to connect to {request_url}\n")
-        return 0
 
 
 def get_catalog_asset_count(server_url, catalog_id, session):
@@ -98,9 +100,9 @@ def get_catalog_asset_count(server_url, catalog_id, session):
     except requests.exceptions.ConnectionError:
         print(f"ERROR: get_catalog_asset_count() failed to connect to {request_url}\n")
         return 0
-
-    response = request.json()
-    return response['totalNumberOfAssets']
+    else:
+        response = request.json()
+        return response['totalNumberOfAssets']
 
 
 def get_catalogs(server_url, session):
@@ -115,8 +117,8 @@ def get_catalogs(server_url, session):
     except requests.exceptions.ConnectionError:
         print(f"ERROR: get_catalogs() failed to connect to {request_url}\n")
         return []
-
-    return request.json()
+    else:
+        return request.json()
 
 
 def get_login_session(server_url, username, password):
@@ -149,17 +151,17 @@ def get_login_session(server_url, username, password):
     except requests.exceptions.ConnectionError:
         print(f"ERROR: login() failed to connect to {request_url}\n")
         return ""
-
-    response = request.json()
-
-    if "session" in response:
-        return response['session']
-    elif "faultCode" in response:
-        print(f"ERROR: could not log in. Fault code {response['faultCode']}, message is {response['message']}")
-        return ""
     else:
-        print(f"ERROR: could not log in, unknown error.")
-        return ""
+        response = request.json()
+
+        if "session" in response:
+            return response['session']
+        elif "faultCode" in response:
+            print(f"ERROR: could not log in. Fault code {response['faultCode']}, message is {response['message']}")
+            return ""
+        else:
+            print(f"ERROR: could not log in, unknown error.")
+            return ""
 
 
 def get_public_key(server_url):
@@ -172,11 +174,11 @@ def get_public_key(server_url):
     except requests.exceptions.ConnectionError:
         print(f"ERROR: logout() failed to connect to {request_url}\n")
         return False
-
-    response = request.json()
-    modulus = int(response['modulusBase16'], base=16)  # It's a hex string so we need to turn it into a base 10 integer
-    exponent = int(response['exponent'])
-    return RSA.construct((modulus, exponent))
+    else:
+        response = request.json()
+        modulus = int(response['modulusBase16'], base=16)  # It's a hex string so we need to turn it into a base 10 integer
+        exponent = int(response['exponent'])
+        return RSA.construct((modulus, exponent))
 
 
 def logout(server_url, session):
@@ -199,13 +201,13 @@ def logout(server_url, session):
     except requests.exceptions.ConnectionError:
         print(f"ERROR: logout() failed to connect to {request_url}\n")
         return False
-
-    # Status code 204 indicates a sucessful logout
-    if request.status_code == 204:
-        return True
     else:
-        print(f"Logout response is {request.status_code}")
-        return False
+        # Status code 204 indicates a sucessful logout
+        if request.status_code == 204:
+            return True
+        else:
+            print(f"Logout response is {request.status_code}")
+            return False
 
 
 def save_asset_metadata(asset, folder_path):
@@ -253,10 +255,10 @@ def save_asset_original(server_url, catalog_id, session, asset, folder_path):
         request.raise_for_status()
     except requests.exceptions.ConnectionError:
         print(f"ERROR: save_asset_original() failed to connect to {request_url}\n")
-
-    response = request.content
-    with open(os.path.join(folder_path, filename), 'wb') as original:
-        original.write(response)
+    else:
+        response = request.content
+        with open(os.path.join(folder_path, filename), 'wb') as original:
+            original.write(response)
 
 
 def save_asset_preview(server_url, catalog_id, session, asset, folder_path):
@@ -279,10 +281,10 @@ def save_asset_preview(server_url, catalog_id, session, asset, folder_path):
         request.raise_for_status()
     except requests.exceptions.ConnectionError:
         print(f"ERROR: save_asset_preview() failed to connect to {request_url}\n")
-
-    response = request.content
-    with open(os.path.join(folder_path, filename), 'wb') as preview:
-        preview.write(response)
+    else:
+        response = request.content
+        with open(os.path.join(folder_path, filename), 'wb') as preview:
+            preview.write(response)
 
 
 #
