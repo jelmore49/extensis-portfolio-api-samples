@@ -10,16 +10,32 @@ import requests
 
 # Constants
 
-SERVER_ADDRESS = "playground.extensis.com"
 SERVER_HTTP_PORT = "8090"  # Default port
 SERVER_HTTPS_PORT = "9443"  # Default port
 USE_HTTPS = False
-
-API_TOKEN = "TOKEN-e554ed0f-5438-4576-bfc4-fe562d972920"  # API token; see Portfolio docs on how to generate
-# These are the default username and password for a new Portfolio installation
-LOGIN_USERNAME = "administrator"
-LOGIN_PASSWORD = "password"
 USE_API_TOKEN = True
+
+# Check for a local server address; if it doesn't exist, use the Extensis "playground" server
+try:
+    PORTFOLIO_SERVER_ADDRESS = os.environ['PORTFOLIO_SERVER_ADDRESS']
+except KeyError:
+    PORTFOLIO_SERVER_ADDRESS = "playground.extensis.com"
+
+# If we're using an API token, look for a local one; otherwise, use the demo token
+if USE_API_TOKEN:
+    try:
+        PORTFOLIO_API_TOKEN = os.environ['PORTFOLIO_API_TOKEN']
+    except KeyError:
+        PORTFOLIO_API_TOKEN = "TOKEN-e554ed0f-5438-4576-bfc4-fe562d972920"
+else:
+# If we're not using an API token, look for a username and password
+# Otherwise, use the default username and password for a new Portfolio installation
+    try:
+        PORTFOLIO_LOGIN_USERNAME = os.environ['PORTFOLIO_LOGIN_USERNAME']
+        PORTFOLIO_LOGIN_PASSWORD = os.environ['PORTFOLIO_LOGIN_PASSWORD']
+    except KeyError:
+        PORTFOLIO_LOGIN_USERNAME = "administrator"
+        PORTFOLIO_LOGIN_PASSWORD = "password"
 
 REQUEST_HEADERS = {'Accept': 'application/json, text/plain, */*',
                    'Content-Type': 'application/json;charset=UTF-8'}
@@ -292,16 +308,16 @@ def save_asset_preview(server_url, catalog_id, session, asset, folder_path):
 #
 
 if USE_HTTPS:
-    demo_url = f"https://{SERVER_ADDRESS}:{SERVER_HTTPS_PORT}"
+    demo_url = f"https://{PORTFOLIO_SERVER_ADDRESS}:{SERVER_HTTPS_PORT}"
 else:
-    demo_url = f"http://{SERVER_ADDRESS}:{SERVER_HTTP_PORT}"
+    demo_url = f"http://{PORTFOLIO_SERVER_ADDRESS}:{SERVER_HTTP_PORT}"
 
 if USE_API_TOKEN:
     print("We're using an API token to log in.")
-    session_id = API_TOKEN
+    session_id = PORTFOLIO_API_TOKEN
 else:
-    print(f"Logging in to {demo_url} with username {LOGIN_USERNAME}...")
-    session_id = get_login_session(server_url=demo_url, username=LOGIN_USERNAME, password=LOGIN_PASSWORD)
+    PORTFOLIO_print(f"Logging in to {demo_url} with username {LOGIN_USERNAME}...")
+    PORTFOLIO_PORTFOLIO_session_id = get_login_session(server_url=demo_url, username=LOGIN_USERNAME, password=LOGIN_PASSWORD)
     if not session_id:  # We got an empty string back for some reason
         print("ERROR: We didn't get a valid session from login(), exiting.")
         exit()
