@@ -316,8 +316,8 @@ if USE_API_TOKEN:
     print("We're using an API token to log in.")
     session_id = PORTFOLIO_API_TOKEN
 else:
-    PORTFOLIO_print(f"Logging in to {demo_url} with username {LOGIN_USERNAME}...")
-    PORTFOLIO_PORTFOLIO_session_id = get_login_session(server_url=demo_url, username=LOGIN_USERNAME, password=LOGIN_PASSWORD)
+    print(f"Logging in to {demo_url} with username {PORTFOLIO_LOGIN_USERNAME}...")
+    session_id = get_login_session(demo_url, username=PORTFOLIO_LOGIN_USERNAME, password=PORTFOLIO_LOGIN_PASSWORD)
     if not session_id:  # We got an empty string back for some reason
         print("ERROR: We didn't get a valid session from login(), exiting.")
         exit()
