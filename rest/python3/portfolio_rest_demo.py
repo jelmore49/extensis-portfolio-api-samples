@@ -98,6 +98,31 @@ def get_asset_id(server_url, catalog_id, session, asset_index):
             return int(assets[0]['id'])
 
 
+def get_asset_ids_for_gallery(server_url, catalog_id, gallery_id, session):
+    """Returns a list of record IDs for the records in a gallery.
+    If there are more than 100 records, we return the first 100 IDs.
+    Returns an empty list if we can't connect to the server.
+    """
+    request_url = f"{server_url}/api/v1/catalog/{catalog_id}/asset/?session={session}"
+    request_body = {'fields': ["Item ID"],
+                    'pageSize': 100,
+                    'startingIndex': 0,
+                    'galleryId': gallery_id,
+                    'sortOptions': {'field': "RID", 'order': "asc"}
+                    }
+
+    try:
+        request = requests.post(request_url, data=dumps(request_body), headers=REQUEST_HEADERS)
+        request.raise_for_status()
+    except requests.exceptions.ConnectionError:
+        print(f"ERROR: get_asset_ids_for_gallery() failed to connect to {request_url}\n")
+        return []
+    else:
+        response = request.json()
+        response_assets = response['assets']  # We get a dict back so we get list of assets...
+        return [asset['id'] for asset in response_assets]  # ...and return a list of the IDs
+
+
 def get_catalog_asset_count(server_url, catalog_id, session):
     """Returns the number of assets in a catalog.
     Returns 0 if we can't connect to the server.
@@ -132,6 +157,22 @@ def get_catalogs(server_url, session):
         request.raise_for_status()
     except requests.exceptions.ConnectionError:
         print(f"ERROR: get_catalogs() failed to connect to {request_url}\n")
+        return []
+    else:
+        return request.json()
+
+
+def get_galleries_from_catalog(server_url, catalog_id, session):
+    """Returns a list of available galleries.
+    Returns an empty list if we can't connect to the server.
+    """
+    request_url = f"{server_url}/api/v1/catalog/{catalog_id}/galleries?session={session}"
+
+    try:
+        request = requests.get(request_url)
+        request.raise_for_status()
+    except requests.exceptions.ConnectionError:
+        print(f"ERROR: get_galleries_from_catalog() failed to connect to {request_url}\n")
         return []
     else:
         return request.json()
