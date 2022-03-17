@@ -52,6 +52,7 @@ def get_asset_id(server_url, catalog_id, session, asset_index):
     we query the RIDs of the entire catalog, set the items per page to 1, sort the pages by RID,
     then get the asset_index-th page and return the RID of that item.
     """
+
     request_url = f"{server_url}/api/v1/catalog/{catalog_id}/asset/?session={session}"
     request_body = {'fields': ["Item ID"],
                     'pageSize': 1,
@@ -81,6 +82,7 @@ def get_asset_ids_for_gallery(server_url, catalog_id, gallery_id, session):
     If there are more than 100 records, we return the first 100 IDs.
     Returns an empty list if we can't connect to the server.
     """
+
     request_url = f"{server_url}/api/v1/catalog/{catalog_id}/asset/?session={session}"
     request_body = {'fields': ["Item ID"],
                     'pageSize': 100,
@@ -105,6 +107,7 @@ def get_catalog_asset_count(server_url, catalog_id, session):
     """Returns the number of assets in a catalog.
     Returns 0 if we can't connect to the server.
     """
+
     request_url = f"{server_url}/api/v1/catalog/{catalog_id}/asset/?session={session}"
     # All we want is the totalNumberOfAssets field in the response so we make the smallest query possible;
     # we're requesting a single Asset but we don't do anything with it
@@ -128,6 +131,7 @@ def get_catalogs(server_url, session):
     """Returns a list of available catalogs.
     Returns an empty list if we can't connect to the server.
     """
+
     request_url = f"{server_url}/api/v1/catalog?session={session}"
 
     try:
@@ -144,6 +148,7 @@ def get_galleries_from_catalog(server_url, catalog_id, session):
     """Returns a list of available galleries.
     Returns an empty list if we can't connect to the server.
     """
+
     request_url = f"{server_url}/api/v1/catalog/{catalog_id}/galleries?session={session}"
 
     try:
@@ -201,6 +206,7 @@ def get_login_session(server_url, username, password):
 
 def get_public_key(server_url):
     """Returns an RsaKey of the Portfolio server's public key."""
+
     request_url = f"{server_url}/api/v1/auth/public-key"
 
     try:
@@ -221,6 +227,7 @@ def logout(server_url, session):
     This isn't needed for API tokens, as they don't take up a Portfolio user seat, but you should
     do this for username/password logins so the seat is released.
     """
+
     # Sanity check; if we pass a session ID that starts with TOKEN then it's an API token
     #  and there's nothing for us to do.
     if session[0:5] == "TOKEN":
@@ -247,6 +254,7 @@ def logout(server_url, session):
 
 def save_asset_metadata(asset, folder_path):
     """Saves the metadata for the Asset in a tab-delimited text file to the folder specified by folder_path"""
+
     try:
         os.makedirs(folder_path)
     except OSError:
@@ -325,6 +333,10 @@ def save_asset_preview(server_url, catalog_id, session, asset, folder_path):
 #
 # Show off what we can do
 #
+
+# Get server information. We're looking for a creds.json file
+# with the same structure as the dict below. If we can't find it
+# Then we use the placeholder info
 
 try:
     with open('creds.json', 'r') as file:
