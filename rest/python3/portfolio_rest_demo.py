@@ -3,7 +3,7 @@
 from base64 import b64encode
 from Crypto.Cipher import PKCS1_v1_5
 from Crypto.PublicKey import RSA
-from json import dumps
+from json import dumps, load
 from random import choice, randint
 import os
 import requests
@@ -14,28 +14,6 @@ SERVER_HTTP_PORT = "8090"  # Default port
 SERVER_HTTPS_PORT = "9443"  # Default port
 USE_HTTPS = False
 USE_API_TOKEN = True
-
-# Check for a local server address; if it doesn't exist, use the Extensis "playground" server
-try:
-    PORTFOLIO_SERVER_ADDRESS = os.environ['PORTFOLIO_SERVER_ADDRESS']
-except KeyError:
-    PORTFOLIO_SERVER_ADDRESS = "playground.extensis.com"
-
-# If we're using an API token, look for a local one; otherwise, use the demo token
-if USE_API_TOKEN:
-    try:
-        PORTFOLIO_API_TOKEN = os.environ['PORTFOLIO_API_TOKEN']
-    except KeyError:
-        PORTFOLIO_API_TOKEN = "TOKEN-e554ed0f-5438-4576-bfc4-fe562d972920"
-else:
-    # If we're not using an API token, look for a username and password
-    # Otherwise, use the default username and password for a new Portfolio installation
-    try:
-        PORTFOLIO_LOGIN_USERNAME = os.environ['PORTFOLIO_LOGIN_USERNAME']
-        PORTFOLIO_LOGIN_PASSWORD = os.environ['PORTFOLIO_LOGIN_PASSWORD']
-    except KeyError:
-        PORTFOLIO_LOGIN_USERNAME = "administrator"
-        PORTFOLIO_LOGIN_PASSWORD = "password"
 
 REQUEST_HEADERS = {'Accept': 'application/json, text/plain, */*',
                    'Content-Type': 'application/json;charset=UTF-8'}
@@ -348,17 +326,29 @@ def save_asset_preview(server_url, catalog_id, session, asset, folder_path):
 # Show off what we can do
 #
 
+try:
+    with open('creds.json', 'r') as file:
+        server_credentials = load(file)
+except FileNotFoundError:
+    print("ERROR: Can't find creds.json, using defaults")
+    server_credentials = {
+        'server': 'playground.extensis.com',  # This is the Extensis test server
+        'token': 'TOKEN-e554ed0f-5438-4576-bfc4-fe562d972920',  # This is a valid API token for the Extensis test server
+        'username': 'administrator',
+        'password': 'password'  # This is not the password for the admin account for the Extensis test server
+    }
+
 if USE_HTTPS:
-    demo_url = f"https://{PORTFOLIO_SERVER_ADDRESS}:{SERVER_HTTPS_PORT}"
+    demo_url = f"https://{server_credentials['server']}:{SERVER_HTTPS_PORT}"
 else:
-    demo_url = f"http://{PORTFOLIO_SERVER_ADDRESS}:{SERVER_HTTP_PORT}"
+    demo_url = f"http://{server_credentials['server']}:{SERVER_HTTP_PORT}"
 
 if USE_API_TOKEN:
     print("We're using an API token to log in.")
-    session_id = PORTFOLIO_API_TOKEN
+    session_id = server_credentials['token']
 else:
-    print(f"Logging in to {demo_url} with username {PORTFOLIO_LOGIN_USERNAME}...")
-    session_id = get_login_session(demo_url, username=PORTFOLIO_LOGIN_USERNAME, password=PORTFOLIO_LOGIN_PASSWORD)
+    print(f"Logging in to {demo_url} with username {server_credentials['username']}...")
+    session_id = get_login_session(demo_url, username=server_credentials['username'], password=server_credentials['password'])
     if not session_id:  # We got an empty string back for some reason
         print("ERROR: We didn't get a valid session from get_login_session(), exiting.")
         exit()
@@ -435,6 +425,8 @@ test_asset_filename = test_asset_fields['Filename'][0]
 print(f"Our test asset is '{test_asset_filename}'.")
 print(f"It was cataloged on {test_asset_fields['Cataloged'][0]} by {test_asset_fields['Cataloged By'][0]}.")
 print(f"The file is {test_asset_fields['File Size'][0]} bytes in size.")
+
+# FIXME: This breaks if there are no keywords
 print("The file's keywords are:")
 print(*test_asset_fields['Keywords'], sep="; ")
 
