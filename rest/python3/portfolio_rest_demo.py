@@ -52,7 +52,7 @@ def get_asset(server_url, catalog_id, session, record_id):
     request_url = f"{server_url}/api/v1/catalog/{catalog_id}/asset/?session={session}"
     request_body = {'pageSize': 1,
                     'startingIndex': 0,
-                    'sortOptions': {'field': "RID", 'order': "desc"},
+                    'sortOptions': {'field': "RID", 'order': "asc"},
                     'term': {'operator': "assetsById", 'values': [record_id]}}
 
     try:
@@ -78,7 +78,7 @@ def get_asset_id(server_url, catalog_id, session, asset_index):
     request_body = {'fields': ["Item ID"],
                     'pageSize': 1,
                     'startingIndex': asset_index,
-                    'sortOptions': {'field': "RID", 'order': "desc"}}
+                    'sortOptions': {'field': "RID", 'order': "asc"}}
 
     try:
         request = requests.post(request_url, data=dumps(request_body), headers=REQUEST_HEADERS)
@@ -133,7 +133,7 @@ def get_catalog_asset_count(server_url, catalog_id, session):
     request_body = {'fields': ["Filename"],  # If we don't specify at least one field, we get all of them
                     'pageSize': 1,
                     'startingIndex': 0,
-                    'sortOptions': {'field': "Cataloged", 'order': "desc"}}
+                    'sortOptions': {'field': "Cataloged", 'order': "asc"}}
 
     try:
         request = requests.post(request_url, data=dumps(request_body), headers=REQUEST_HEADERS)
