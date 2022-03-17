@@ -394,6 +394,18 @@ if total_assets == 0:
 
 print(f"'{demo_catalog}' has {total_assets} assets")
 
+print(f"\nGetting the gallery information for '{demo_catalog}'...")
+catalog_galleries = get_galleries_from_catalog(server_url=demo_url, session=session_id, catalog_id=demo_catalog_id)
+gallery_names = [gallery['name'] for gallery in catalog_galleries]
+print(f"The galleries in '{demo_catalog}' are:")
+print(*gallery_names, sep=", ")
+
+demo_gallery_name = catalog_galleries[0]['name']
+demo_gallery_id = catalog_galleries[0]['id']
+print(f"\nGetting the list of record IDs from the gallery '{demo_gallery_name}'...")
+gallery_record_ids = get_asset_ids_for_gallery(server_url=demo_url, session=session_id, gallery_id=demo_gallery_id, catalog_id=demo_catalog_id)
+print(f"The record IDs from the gallery '{demo_gallery_name}' are {gallery_record_ids}")
+
 print(f"\nGetting a random record ID from '{demo_catalog}'...")
 print("(In practice, you wouldn't do this: you'd submit search terms to get a useful set\n"
       "of assets back. Since we don't know what is in the catalog, we're choosing a random asset.\n"
