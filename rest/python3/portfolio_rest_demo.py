@@ -165,7 +165,7 @@ def get_login_session(server_url, username, password):
         request = requests.post(request_url, data=dumps(request_body), headers=REQUEST_HEADERS)
         request.raise_for_status()
     except requests.exceptions.ConnectionError:
-        print(f"ERROR: login() failed to connect to {request_url}\n")
+        print(f"ERROR: get_login_session() failed to connect to {request_url}\n")
         return ""
     else:
         response = request.json()
@@ -188,7 +188,7 @@ def get_public_key(server_url):
         request = requests.get(request_url, headers=REQUEST_HEADERS)
         request.raise_for_status()
     except requests.exceptions.ConnectionError:
-        print(f"ERROR: logout() failed to connect to {request_url}\n")
+        print(f"ERROR: get_public_key() failed to connect to {request_url}\n")
         return False
     else:
         response = request.json()
@@ -319,7 +319,7 @@ else:
     print(f"Logging in to {demo_url} with username {PORTFOLIO_LOGIN_USERNAME}...")
     session_id = get_login_session(demo_url, username=PORTFOLIO_LOGIN_USERNAME, password=PORTFOLIO_LOGIN_PASSWORD)
     if not session_id:  # We got an empty string back for some reason
-        print("ERROR: We didn't get a valid session from login(), exiting.")
+        print("ERROR: We didn't get a valid session from get_login_session(), exiting.")
         exit()
 
 print(f"Getting a list of catalogs from {demo_url}...")
