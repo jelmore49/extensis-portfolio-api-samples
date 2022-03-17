@@ -28,8 +28,8 @@ if USE_API_TOKEN:
     except KeyError:
         PORTFOLIO_API_TOKEN = "TOKEN-e554ed0f-5438-4576-bfc4-fe562d972920"
 else:
-# If we're not using an API token, look for a username and password
-# Otherwise, use the default username and password for a new Portfolio installation
+    # If we're not using an API token, look for a username and password
+    # Otherwise, use the default username and password for a new Portfolio installation
     try:
         PORTFOLIO_LOGIN_USERNAME = os.environ['PORTFOLIO_LOGIN_USERNAME']
         PORTFOLIO_LOGIN_PASSWORD = os.environ['PORTFOLIO_LOGIN_PASSWORD']
@@ -233,7 +233,7 @@ def get_public_key(server_url):
         return False
     else:
         response = request.json()
-        modulus = int(response['modulusBase16'], base=16)  # It's a hex string so we need to turn it into a base 10 integer
+        modulus = int(response['modulusBase16'], base=16)  # It's a hex string so we need to turn it into a base 10 int
         exponent = int(response['exponent'])
         return RSA.construct((modulus, exponent))
 
@@ -259,7 +259,7 @@ def logout(server_url, session):
         print(f"ERROR: logout() failed to connect to {request_url}\n")
         return False
     else:
-        # Status code 204 indicates a sucessful logout
+        # Status code 204 indicates a successful logout
         if request.status_code == 204:
             return True
         else:
@@ -403,7 +403,8 @@ print(*gallery_names, sep=", ")
 demo_gallery_name = catalog_galleries[0]['name']
 demo_gallery_id = catalog_galleries[0]['id']
 print(f"\nGetting the list of record IDs from the gallery '{demo_gallery_name}'...")
-gallery_record_ids = get_asset_ids_for_gallery(server_url=demo_url, session=session_id, gallery_id=demo_gallery_id, catalog_id=demo_catalog_id)
+gallery_record_ids = get_asset_ids_for_gallery(server_url=demo_url, session=session_id, gallery_id=demo_gallery_id,
+                                               catalog_id=demo_catalog_id)
 print(f"The record IDs from the gallery '{demo_gallery_name}' are {gallery_record_ids}")
 
 print(f"\nGetting a random record ID from '{demo_catalog}'...")
