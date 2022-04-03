@@ -46,8 +46,11 @@ METADATA_FOLDER = "Metadata"  # Folder to save downloaded metadata on disk
 
 
 # Functions
+# Functions with "/" in their signature will only accept parameters to the left of / as positional
+# Functions with "*" in their signature will only accept parameters to the right of * as keywords
+# If you break these rules, you will get a TypeError
 
-def get_asset(server_url, catalog_id, session, record_id):
+def get_asset(server_url, /, catalog_id, session, record_id):
     """Returns the Asset with the record ID of record_id"""
     request_url = f"{server_url}/api/v1/catalog/{catalog_id}/asset/?session={session}"
     request_body = {'pageSize': 1,
@@ -66,7 +69,7 @@ def get_asset(server_url, catalog_id, session, record_id):
         return response['assets'][0]  # We get a list back so we return the first item
 
 
-def get_asset_id(server_url, catalog_id, session, asset_index):
+def get_asset_id(server_url, /, catalog_id, session, asset_index):
     """Returns the record ID of an Asset.
     Returns 0 if we can't connect to the server.
     Record IDs (RIDs) aren't entirely sequential; as records are deleted, the RIDs disappear.
@@ -129,7 +132,7 @@ def get_catalog_asset_count(server_url, catalog_id, session):
     """
     request_url = f"{server_url}/api/v1/catalog/{catalog_id}/asset/?session={session}"
     # All we want is the totalNumberOfAssets field in the response so we make the smallest query possible;
-    # we're requesting a single Asset but we don't do anything with it
+    # we're requesting a single field but we don't do anything with it
     request_body = {'fields': ["Filename"],  # If we don't specify at least one field, we get all of them
                     'pageSize': 1,
                     'startingIndex': 0,
@@ -146,7 +149,7 @@ def get_catalog_asset_count(server_url, catalog_id, session):
         return response['totalNumberOfAssets']
 
 
-def get_catalogs(server_url, session):
+def get_catalogs(server_url, /, session):
     """Returns a list of available catalogs.
     Returns an empty list if we can't connect to the server.
     """
@@ -221,7 +224,7 @@ def get_login_session(server_url, username, password):
             return ""
 
 
-def get_public_key(server_url):
+def get_public_key(server_url, /):
     """Returns an RsaKey of the Portfolio server's public key."""
     request_url = f"{server_url}/api/v1/auth/public-key"
 
@@ -238,7 +241,7 @@ def get_public_key(server_url):
         return RSA.construct((modulus, exponent))
 
 
-def logout(server_url, session):
+def logout(server_url, /, session):
     """Logs out the user session.
     This isn't needed for API tokens, as they don't take up a Portfolio user seat, but you should
     do this for username/password logins so the seat is released.
@@ -292,7 +295,7 @@ def save_asset_metadata(asset, folder_path):
                 metadata.write(f"{key}\t{','.join(asset_fields[key])}\n")
 
 
-def save_asset_original(server_url, catalog_id, session, asset, folder_path):
+def save_asset_original(server_url, /, catalog_id, session, asset, folder_path):
     """Saves the original file for the Asset to the folder specified by folder_path"""
 
     try:
@@ -318,7 +321,7 @@ def save_asset_original(server_url, catalog_id, session, asset, folder_path):
             original.write(response)
 
 
-def save_asset_preview(server_url, catalog_id, session, asset, folder_path):
+def save_asset_preview(server_url, /, catalog_id, session, asset, folder_path):
     """Saves the JPEG preview for the Asset to the folder specified by folder_path"""
 
     try:
@@ -364,7 +367,7 @@ else:
         exit()
 
 print(f"Getting a list of catalogs from {demo_url}...")
-catalogs = get_catalogs(server_url=demo_url, session=session_id)
+catalogs = get_catalogs(demo_url, session=session_id)
 
 if not catalogs:  # If the list is empty
     print("ERROR: No catalogs are available, exiting\n")
@@ -386,7 +389,7 @@ if demo_catalog_id == "":
     exit()
 
 print(f"\nGetting the total number of assets in '{demo_catalog}'...")
-total_assets = get_catalog_asset_count(server_url=demo_url, session=session_id, catalog_id=demo_catalog_id)
+total_assets = get_catalog_asset_count(demo_url, session=session_id, catalog_id=demo_catalog_id)
 
 if total_assets == 0:
     print(f"ERROR: '{demo_catalog}' has no assets, exiting")
@@ -414,7 +417,7 @@ print("(In practice, you wouldn't do this: you'd submit search terms to get a us
 
 random_asset_index = randint(0, total_assets)
 print(f"Our random asset index is {random_asset_index}")
-random_asset_id = get_asset_id(server_url=demo_url, session=session_id, catalog_id=demo_catalog_id,
+random_asset_id = get_asset_id(demo_url, session=session_id, catalog_id=demo_catalog_id,
                                asset_index=random_asset_index)
 print(f"The record's ID is {random_asset_id}")
 
@@ -423,7 +426,7 @@ if random_asset_id == 0:
     exit()
 
 print(f"\nGetting our random Asset from '{demo_catalog}'...")
-test_asset = get_asset(server_url=demo_url, session=session_id, catalog_id=demo_catalog_id, record_id=random_asset_id)
+test_asset = get_asset(demo_url, session=session_id, catalog_id=demo_catalog_id, record_id=random_asset_id)
 
 if test_asset == {}:
     print(f"ERROR: We have no Asset to work with, exiting")
@@ -446,11 +449,11 @@ print(f"\nSaving metadata for '{test_asset_filename}' to a text file...")
 save_asset_metadata(asset=test_asset, folder_path=METADATA_FOLDER)
 
 print(f"Getting the original file for '{test_asset_filename}'...")
-save_asset_original(server_url=demo_url, session=session_id, catalog_id=demo_catalog_id, asset=test_asset,
+save_asset_original(demo_url, session=session_id, catalog_id=demo_catalog_id, asset=test_asset,
                     folder_path=ASSETS_FOLDER)
 
 print(f"Getting the preview for '{test_asset_filename}'...")
-save_asset_preview(server_url=demo_url, session=session_id, catalog_id=demo_catalog_id, asset=test_asset,
+save_asset_preview(demo_url, session=session_id, catalog_id=demo_catalog_id, asset=test_asset,
                    folder_path=PREVIEWS_FOLDER)
 
 print("\nLogging out of the server...")
@@ -458,7 +461,7 @@ print("\nLogging out of the server...")
 if USE_API_TOKEN:
     print("We're using an API token so there's no seat to reclaim; skipping logout.")
 else:
-    if logout(server_url=demo_url, session=session_id):
+    if logout(demo_url, session=session_id):
         print("Session logout successful.")
     else:
         print("Session logout failed for some reason.")
