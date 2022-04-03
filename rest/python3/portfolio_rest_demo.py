@@ -107,7 +107,7 @@ def get_catalog_asset_count(server_url, /, catalog_id, session):
     """
     request_url = f"{server_url}/api/v1/catalog/{catalog_id}/asset/?session={session}"
     # All we want is the totalNumberOfAssets field in the response so we make the smallest query possible;
-    # we're requesting a single Asset but we don't do anything with it
+    # we're requesting a single field but we don't do anything with it
     request_body = {'fields': ["Filename"],  # If we don't specify at least one field, we get all of them
                     'pageSize': 1,
                     'startingIndex': 0,
