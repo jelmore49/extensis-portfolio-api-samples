@@ -123,7 +123,7 @@ def get_asset_ids_for_gallery(server_url, catalog_id, gallery_id, session) -> li
     else:
         response = request.json()
         response_assets = response['assets']  # We get a dict back so we get list of assets...
-        return [asset['id'] for asset in response_assets]  # ...and return a list of the IDs
+        return [int(asset['id']) for asset in response_assets]  # ...and return a list of the IDs
 
 
 def get_catalog_asset_count(server_url, catalog_id, session) -> int:
