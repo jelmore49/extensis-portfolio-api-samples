@@ -165,7 +165,7 @@ def get_catalogs(server_url: str, /, session: str) -> list:
         return request.json()
 
 
-def get_galleries_from_catalog(server_url: str, / catalog_id: str, session: str) -> list:
+def get_galleries_from_catalog(server_url: str, /, catalog_id: str, session: str) -> list:
     """Returns a list of available galleries.
     Returns an empty list if we can't connect to the server.
     """
@@ -272,7 +272,7 @@ def logout(server_url: str, /, session: str) -> bool:
             return False
 
 
-def save_asset_metadata(/, asset: dict, folder_path: str):
+def save_asset_metadata(*, asset: dict, folder_path: str):
     """Saves the metadata for the Asset in a tab-delimited text file to the folder specified by folder_path"""
     try:
         os.makedirs(folder_path)
