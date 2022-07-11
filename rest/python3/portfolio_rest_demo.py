@@ -50,7 +50,7 @@ METADATA_FOLDER = "Metadata"  # Folder to save downloaded metadata on disk
 # Functions with "*" in their signature will only accept parameters to the right of * as keywords
 # If you break these rules, you will get a TypeError
 
-def get_asset(server_url, /, catalog_id, session, record_id):
+def get_asset(server_url, /, catalog_id, session, record_id) -> dict:
     """Returns the Asset with the record ID of record_id"""
     request_url = f"{server_url}/api/v1/catalog/{catalog_id}/asset/?session={session}"
     request_body = {'pageSize': 1,
@@ -69,7 +69,7 @@ def get_asset(server_url, /, catalog_id, session, record_id):
         return response['assets'][0]  # We get a list back so we return the first item
 
 
-def get_asset_id(server_url, /, catalog_id, session, asset_index):
+def get_asset_id(server_url, /, catalog_id, session, asset_index) -> int:
     """Returns the record ID of an Asset.
     Returns 0 if we can't connect to the server.
     Record IDs (RIDs) aren't entirely sequential; as records are deleted, the RIDs disappear.
@@ -101,7 +101,7 @@ def get_asset_id(server_url, /, catalog_id, session, asset_index):
             return int(assets[0]['id'])
 
 
-def get_asset_ids_for_gallery(server_url, catalog_id, gallery_id, session):
+def get_asset_ids_for_gallery(server_url, catalog_id, gallery_id, session) -> list:
     """Returns a list of record IDs for the records in a gallery.
     If there are more than 100 records, we return the first 100 IDs.
     Returns an empty list if we can't connect to the server.
@@ -126,7 +126,7 @@ def get_asset_ids_for_gallery(server_url, catalog_id, gallery_id, session):
         return [asset['id'] for asset in response_assets]  # ...and return a list of the IDs
 
 
-def get_catalog_asset_count(server_url, catalog_id, session):
+def get_catalog_asset_count(server_url, catalog_id, session) -> int:
     """Returns the number of assets in a catalog.
     Returns 0 if we can't connect to the server.
     """
@@ -149,7 +149,7 @@ def get_catalog_asset_count(server_url, catalog_id, session):
         return response['totalNumberOfAssets']
 
 
-def get_catalogs(server_url, /, session):
+def get_catalogs(server_url, /, session) -> list:
     """Returns a list of available catalogs.
     Returns an empty list if we can't connect to the server.
     """
@@ -165,7 +165,7 @@ def get_catalogs(server_url, /, session):
         return request.json()
 
 
-def get_galleries_from_catalog(server_url, catalog_id, session):
+def get_galleries_from_catalog(server_url, catalog_id, session) -> list:
     """Returns a list of available galleries.
     Returns an empty list if we can't connect to the server.
     """
@@ -181,7 +181,7 @@ def get_galleries_from_catalog(server_url, catalog_id, session):
         return request.json()
 
 
-def get_login_session(server_url, username, password):
+def get_login_session(server_url, username, password) -> str:
     # Get the public key from the server
     server_public_key = get_public_key(server_url)
 
@@ -224,8 +224,8 @@ def get_login_session(server_url, username, password):
             return ""
 
 
-def get_public_key(server_url, /):
     """Returns an RsaKey of the Portfolio server's public key."""
+def get_public_key(server_url, /) -> RsaKey:
     request_url = f"{server_url}/api/v1/auth/public-key"
 
     try:
@@ -233,7 +233,7 @@ def get_public_key(server_url, /):
         request.raise_for_status()
     except requests.exceptions.ConnectionError:
         print(f"ERROR: get_public_key() failed to connect to {request_url}\n")
-        return False
+        return None
     else:
         response = request.json()
         modulus = int(response['modulusBase16'], base=16)  # It's a hex string so we need to turn it into a base 10 int
@@ -241,7 +241,7 @@ def get_public_key(server_url, /):
         return RSA.construct((modulus, exponent))
 
 
-def logout(server_url, /, session):
+def logout(server_url, /, session) -> bool:
     """Logs out the user session.
     This isn't needed for API tokens, as they don't take up a Portfolio user seat, but you should
     do this for username/password logins so the seat is released.
