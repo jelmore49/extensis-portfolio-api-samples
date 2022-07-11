@@ -50,7 +50,7 @@ METADATA_FOLDER = "Metadata"  # Folder to save downloaded metadata on disk
 # Functions with "*" in their signature will only accept parameters to the right of * as keywords
 # If you break these rules, you will get a TypeError
 
-def get_asset(server_url, /, catalog_id, session, record_id) -> dict:
+def get_asset(server_url: str, /, catalog_id: str, session: str, record_id: int) -> dict:
     """Returns the Asset with the record ID of record_id"""
     request_url = f"{server_url}/api/v1/catalog/{catalog_id}/asset/?session={session}"
     request_body = {'pageSize': 1,
@@ -69,7 +69,7 @@ def get_asset(server_url, /, catalog_id, session, record_id) -> dict:
         return response['assets'][0]  # We get a list back so we return the first item
 
 
-def get_asset_id(server_url, /, catalog_id, session, asset_index) -> int:
+def get_asset_id(server_url: str, /, catalog_id: str, session: str, asset_index: int) -> int:
     """Returns the record ID of an Asset.
     Returns 0 if we can't connect to the server.
     Record IDs (RIDs) aren't entirely sequential; as records are deleted, the RIDs disappear.
@@ -101,7 +101,7 @@ def get_asset_id(server_url, /, catalog_id, session, asset_index) -> int:
             return int(assets[0]['id'])
 
 
-def get_asset_ids_for_gallery(server_url, catalog_id, gallery_id, session) -> list:
+def get_asset_ids_for_gallery(server_url: str, /, catalog_id: str, gallery_id: str, session: str) -> list:
     """Returns a list of record IDs for the records in a gallery.
     If there are more than 100 records, we return the first 100 IDs.
     Returns an empty list if we can't connect to the server.
@@ -126,7 +126,7 @@ def get_asset_ids_for_gallery(server_url, catalog_id, gallery_id, session) -> li
         return [int(asset['id']) for asset in response_assets]  # ...and return a list of the IDs
 
 
-def get_catalog_asset_count(server_url, catalog_id, session) -> int:
+def get_catalog_asset_count(server_url: str, /, catalog_id: str, session: str) -> int:
     """Returns the number of assets in a catalog.
     Returns 0 if we can't connect to the server.
     """
@@ -149,7 +149,7 @@ def get_catalog_asset_count(server_url, catalog_id, session) -> int:
         return response['totalNumberOfAssets']
 
 
-def get_catalogs(server_url, /, session) -> list:
+def get_catalogs(server_url: str, /, session: str) -> list:
     """Returns a list of available catalogs.
     Returns an empty list if we can't connect to the server.
     """
@@ -165,7 +165,7 @@ def get_catalogs(server_url, /, session) -> list:
         return request.json()
 
 
-def get_galleries_from_catalog(server_url, catalog_id, session) -> list:
+def get_galleries_from_catalog(server_url: str, / catalog_id: str, session: str) -> list:
     """Returns a list of available galleries.
     Returns an empty list if we can't connect to the server.
     """
@@ -181,7 +181,7 @@ def get_galleries_from_catalog(server_url, catalog_id, session) -> list:
         return request.json()
 
 
-def get_login_session(server_url, username, password) -> str:
+def get_login_session(server_url: str, /, username: str, password: str) -> str:
     # Get the public key from the server
     server_public_key = get_public_key(server_url)
 
@@ -224,7 +224,7 @@ def get_login_session(server_url, username, password) -> str:
             return ""
 
 
-def get_public_key(server_url, /) -> RsaKey:
+def get_public_key(server_url: str, /) -> RsaKey:
     """Returns an RsaKey of the Portfolio server's public key.
     Returns None if we can't connect to the server.
     """
@@ -243,7 +243,7 @@ def get_public_key(server_url, /) -> RsaKey:
         return RSA.construct((modulus, exponent))
 
 
-def logout(server_url, /, session) -> bool:
+def logout(server_url: str, /, session: str) -> bool:
     """Logs out the user session.
     This isn't needed for API tokens, as they don't take up a Portfolio user seat, but you should
     do this for username/password logins so the seat is released.
@@ -272,7 +272,7 @@ def logout(server_url, /, session) -> bool:
             return False
 
 
-def save_asset_metadata(asset, folder_path):
+def save_asset_metadata(/, asset: dict, folder_path: str):
     """Saves the metadata for the Asset in a tab-delimited text file to the folder specified by folder_path"""
     try:
         os.makedirs(folder_path)
@@ -297,7 +297,7 @@ def save_asset_metadata(asset, folder_path):
                 metadata.write(f"{key}\t{','.join(asset_fields[key])}\n")
 
 
-def save_asset_original(server_url, /, catalog_id, session, asset, folder_path):
+def save_asset_original(server_url: str, /, catalog_id: str, session, asset: dict, folder_path: str):
     """Saves the original file for the Asset to the folder specified by folder_path"""
 
     try:
@@ -323,7 +323,7 @@ def save_asset_original(server_url, /, catalog_id, session, asset, folder_path):
             original.write(response)
 
 
-def save_asset_preview(server_url, /, catalog_id, session, asset, folder_path):
+def save_asset_preview(server_url: str, /, catalog_id: str, session: str, asset: dict, folder_path: str):
     """Saves the JPEG preview for the Asset to the folder specified by folder_path"""
 
     try:
@@ -400,7 +400,7 @@ if total_assets == 0:
 print(f"'{demo_catalog}' has {total_assets} assets")
 
 print(f"\nGetting the gallery information for '{demo_catalog}'...")
-catalog_galleries = get_galleries_from_catalog(server_url=demo_url, session=session_id, catalog_id=demo_catalog_id)
+catalog_galleries = get_galleries_from_catalog(demo_url, session=session_id, catalog_id=demo_catalog_id)
 gallery_names = [gallery['name'] for gallery in catalog_galleries]
 print(f"The galleries in '{demo_catalog}' are:")
 print(*gallery_names, sep=", ")
@@ -408,7 +408,7 @@ print(*gallery_names, sep=", ")
 demo_gallery_name = catalog_galleries[0]['name']
 demo_gallery_id = catalog_galleries[0]['id']
 print(f"\nGetting the list of record IDs from the gallery '{demo_gallery_name}'...")
-gallery_record_ids = get_asset_ids_for_gallery(server_url=demo_url, session=session_id, gallery_id=demo_gallery_id,
+gallery_record_ids = get_asset_ids_for_gallery(demo_url, session=session_id, gallery_id=demo_gallery_id,
                                                catalog_id=demo_catalog_id)
 print(f"The record IDs from the gallery '{demo_gallery_name}' are {gallery_record_ids}")
 
