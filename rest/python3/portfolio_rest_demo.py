@@ -224,8 +224,10 @@ def get_login_session(server_url, username, password) -> str:
             return ""
 
 
-    """Returns an RsaKey of the Portfolio server's public key."""
 def get_public_key(server_url, /) -> RsaKey:
+    """Returns an RsaKey of the Portfolio server's public key.
+    Returns None if we can't connect to the server.
+    """
     request_url = f"{server_url}/api/v1/auth/public-key"
 
     try:
